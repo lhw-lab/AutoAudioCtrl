@@ -1,0 +1,59 @@
+<!--
+    SwitchToastWindow.xaml - 设备切换通知弹窗
+    从屏幕右下角滑入，显示 3 秒后渐隐消失
+    使用 DynamicResource 跟随主题切换（Light/Dark）
+-->
+<Window x:Class="AudioCtrl.Views.SwitchToastWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Width="320" Height="80"
+        Background="Transparent">
+
+    <Border x:Name="ToastBorder"
+            CornerRadius="10"
+            Background="{DynamicResource CardBackground}"
+            BorderBrush="{DynamicResource WindowBorderBrush}"
+            BorderThickness="1"
+            Margin="2">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" Opacity="0.25" BlurRadius="15" ShadowDepth="0" />
+        </Border.Effect>
+        <Grid Margin="14,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 设备类型图标 -->
+            <Border Grid.Column="0"
+                    Width="36" Height="36"
+                    CornerRadius="18"
+                    Background="{DynamicResource SelectedBackground}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock x:Name="DeviceIcon"
+                           Text="🔊"
+                           FontSize="18"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+            </Border>
+
+            <!-- 文字信息 -->
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
+                <TextBlock x:Name="DeviceNameText"
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource PrimaryText}"
+                           TextTrimming="CharacterEllipsis"
+                           MaxWidth="230" />
+                <TextBlock x:Name="StatusText"
+                           FontSize="11"
+                           Foreground="{DynamicResource SecondaryText}"
+                           Margin="0,2,0,0" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,16 @@
+<!--
+    App.xaml - WPF 应用程序入口定义
+    负责初始化全局资源、样式和应用程序生命周期
+-->
+<Application x:Class="AudioCtrl.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 默认浅色主题，后续通过代码切换 -->
+                <ResourceDictionary Source="Themes/LightTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

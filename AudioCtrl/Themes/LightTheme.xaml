@@ -1,0 +1,30 @@
+<!--
+    LightTheme.xaml - 浅色主题资源字典
+    定义黑白灰极简浅色主题的颜色和样式
+    后续步骤会与深色主题通过 DynamicResource 切换
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 窗口背景 -->
+    <SolidColorBrush x:Key="WindowBackground" Color="#F5F5F5" />
+    <SolidColorBrush x:Key="WindowBorderBrush" Color="#DDDDDD" />
+
+    <!-- 文字颜色 -->
+    <SolidColorBrush x:Key="PrimaryText" Color="#222222" />
+    <SolidColorBrush x:Key="SecondaryText" Color="#888888" />
+
+    <!-- 卡片样式 -->
+    <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="CardBorderBrush" Color="#E0E0E0" />
+    <SolidColorBrush x:Key="CardHoverBorderBrush" Color="#AAAAAA" />
+
+    <!-- 按钮样式 -->
+    <SolidColorBrush x:Key="ButtonBackground" Color="#F0F0F0" />
+    <SolidColorBrush x:Key="ButtonForeground" Color="#333333" />
+    <SolidColorBrush x:Key="ButtonHoverBackground" Color="#E0E0E0" />
+
+    <!-- 高亮/选中 -->
+    <SolidColorBrush x:Key="AccentBrush" Color="#444444" />
+    <SolidColorBrush x:Key="SelectedBackground" Color="#E8E8E8" />
+</ResourceDictionary>

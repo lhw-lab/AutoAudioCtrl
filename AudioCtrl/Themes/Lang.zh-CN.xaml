@@ -1,0 +1,119 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <!--
+        中文语言包（简体中文）
+        键名约定 S.<区域>.<名称>；代码侧通过 Helpers/Loc.T("键名") 取值，
+        XAML 侧通过 {DynamicResource 键名} 绑定（语言切换时自动刷新）
+    -->
+
+    <!-- 应用 -->
+    <sys:String x:Key="S.App.Title">自动音频控制</sys:String>
+    <sys:String x:Key="S.App.SingleInstance">自动音频控制已在运行，请在系统托盘中找到它（双击托盘图标可打开主窗口）。</sys:String>
+    <sys:String x:Key="S.App.CrashLoop">程序出现连续异常，即将退出。请查看日志（Logs/ 目录）排查原因。</sys:String>
+
+    <!-- 通用 -->
+    <sys:String x:Key="S.Common.Yes">是</sys:String>
+    <sys:String x:Key="S.Common.No">否</sys:String>
+    <sys:String x:Key="S.Common.Ok">确定</sys:String>
+
+    <!-- 主题按钮与菜单 -->
+    <sys:String x:Key="S.Theme.Button">🌓 主题</sys:String>
+    <sys:String x:Key="S.Theme.Tooltip">切换界面主题：跟随系统 / 浅色 / 深色</sys:String>
+    <sys:String x:Key="S.Theme.System">跟随系统</sys:String>
+    <sys:String x:Key="S.Theme.Light">浅色</sys:String>
+    <sys:String x:Key="S.Theme.Dark">深色</sys:String>
+
+    <!-- 语言按钮与菜单 -->
+    <sys:String x:Key="S.Lang.Button">🌐 语言</sys:String>
+    <sys:String x:Key="S.Lang.Tooltip">切换界面语言：跟随系统 / 中文 / English</sys:String>
+    <sys:String x:Key="S.Lang.System">跟随系统</sys:String>
+    <sys:String x:Key="S.Lang.Zh">中文</sys:String>
+    <sys:String x:Key="S.Lang.En">English</sys:String>
+
+    <!-- 标题栏按钮 -->
+    <sys:String x:Key="S.Btn.Minimize">最小化到托盘</sys:String>
+    <sys:String x:Key="S.Btn.Close">关闭到托盘</sys:String>
+    <sys:String x:Key="S.Btn.Refresh">↻ 刷新</sys:String>
+
+    <!-- 区域标题 -->
+    <sys:String x:Key="S.Sec.Playback">播放设备</sys:String>
+    <sys:String x:Key="S.Sec.Recording">录制设备</sys:String>
+    <sys:String x:Key="S.Sec.Stand">耳机支架</sys:String>
+    <sys:String x:Key="S.Sec.Mapping">映射配置</sys:String>
+
+    <!-- 支架 -->
+    <sys:String x:Key="S.Stand.Hint">右键设备卡片可将该设备指定给某个支架（拿起时自动切换）</sys:String>
+    <sys:String x:Key="S.Stand.IdFmt">支架 {0}</sys:String>
+    <sys:String x:Key="S.Stand.Lifted">已拿起</sys:String>
+    <sys:String x:Key="S.Stand.OnStand">耳机在架上</sys:String>
+    <sys:String x:Key="S.Stand.LastEventFmt">最近事件 {0}</sys:String>
+    <sys:String x:Key="S.Stand.None">未发现耳机支架——插入支架设备后将自动出现在这里</sys:String>
+    <sys:String x:Key="S.Stand.OnlineFmt">已连接 {0} 个耳机支架</sys:String>
+    <sys:String x:Key="S.Stand.Offline">未发现耳机支架</sys:String>
+    <sys:String x:Key="S.Stand.Detecting">正在检测支架...</sys:String>
+
+    <!-- 设备 -->
+    <sys:String x:Key="S.Dev.Connected">已连接</sys:String>
+    <sys:String x:Key="S.Dev.Disconnected">未连接</sys:String>
+    <sys:String x:Key="S.Dev.PlaybackEmpty">暂无已连接的播放设备</sys:String>
+    <sys:String x:Key="S.Dev.RecordingEmpty">暂无已连接的录制设备</sys:String>
+    <sys:String x:Key="S.Dev.Show">查看未连接设备</sys:String>
+    <sys:String x:Key="S.Dev.Hide">收起未连接设备</sys:String>
+    <sys:String x:Key="S.Dev.CountFmt">({0} 个)</sys:String>
+    <sys:String x:Key="S.Dev.TypePlayback">播放</sys:String>
+    <sys:String x:Key="S.Dev.TypeRecording">录制</sys:String>
+
+    <!-- 状态文本 -->
+    <sys:String x:Key="S.Status.PlaybackFmt">{0} 个播放设备</sys:String>
+    <sys:String x:Key="S.Status.RecordingFmt">{0} 个录制设备</sys:String>
+    <sys:String x:Key="S.Status.DefaultMarked">（默认设备已标记）</sys:String>
+    <sys:String x:Key="S.Status.SummaryFmt">共 {0} 个已连接设备</sys:String>
+    <sys:String x:Key="S.Status.SummaryDiscFmt">共 {0} 个已连接设备，{1} 个未连接设备</sys:String>
+    <sys:String x:Key="S.Status.Enumerating">正在枚举音频设备...</sys:String>
+    <sys:String x:Key="S.Status.EnumFail">枚举失败: {0}</sys:String>
+    <sys:String x:Key="S.Status.Waiting">等待支架事件...</sys:String>
+
+    <!-- 映射配置区 -->
+    <sys:String x:Key="S.Map.Hint">右键设备卡片进行配置,点击 ✕ 删除映射</sys:String>
+    <sys:String x:Key="S.Map.None">暂无映射——右键设备卡片配置「耳机放下时使用此设备」或「耳机拿起时使用此设备」</sys:String>
+    <sys:String x:Key="S.Map.FallbackTitle">耳机全部放下时(外放)</sys:String>
+    <sys:String x:Key="S.Map.PbPrefix">播放 → </sys:String>
+    <sys:String x:Key="S.Map.MicPrefix">麦克风 → </sys:String>
+    <sys:String x:Key="S.Map.LiftPbPrefix">拿起时播放 → </sys:String>
+    <sys:String x:Key="S.Map.DeviceMissing">(设备不在线)</sys:String>
+    <sys:String x:Key="S.Map.DeleteTip">删除此映射</sys:String>
+
+    <!-- 设备卡片右键菜单 -->
+    <sys:String x:Key="S.Ctx.PlacePb">耳机放下时使用此设备播放</sys:String>
+    <sys:String x:Key="S.Ctx.PlaceRec">耳机放下时使用此设备录制</sys:String>
+    <sys:String x:Key="S.Ctx.Lift">耳机拿起时使用此设备</sys:String>
+    <sys:String x:Key="S.Ctx.NoStands">（无在线支架）</sys:String>
+    <sys:String x:Key="S.Ctx.LiftedMark">（已拿起）</sys:String>
+
+    <!-- 配套麦克风提示 -->
+    <sys:String x:Key="S.Mic.Title">配套麦克风</sys:String>
+    <sys:String x:Key="S.Mic.Body">检测到「{0}」自带麦克风。
+
+耳机拿起时,是否自动把麦克风也切换到它?
+(之后可在录制设备上右键单独指定其他麦克风)</sys:String>
+
+    <!-- 事件历史 -->
+    <sys:String x:Key="S.Hist.Lift">拿起</sys:String>
+    <sys:String x:Key="S.Hist.Place">放下</sys:String>
+    <sys:String x:Key="S.Hist.Fmt">{0} 支架 {1} {2}</sys:String>
+
+    <!-- 托盘 -->
+    <sys:String x:Key="S.Tray.Tip">自动音频控制 - 双击打开主窗口</sys:String>
+    <sys:String x:Key="S.Tray.Open">打开主窗口</sys:String>
+    <sys:String x:Key="S.Tray.Quick">快速切换设备</sys:String>
+    <sys:String x:Key="S.Tray.AutoStart">开机自启</sys:String>
+    <sys:String x:Key="S.Tray.Exit">退出</sys:String>
+    <sys:String x:Key="S.Tray.PbGroup">[播放]</sys:String>
+    <sys:String x:Key="S.Tray.RecGroup">[录音]</sys:String>
+    <sys:String x:Key="S.Tray.NoDevices">（无已连接设备）</sys:String>
+    <sys:String x:Key="S.Tray.DefaultFmt">[默认] {0}</sys:String>
+
+    <!-- Toast 通知 -->
+    <sys:String x:Key="S.Toast.DefaultFmt">已设为默认{0}设备</sys:String>
+</ResourceDictionary>

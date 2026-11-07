@@ -1,0 +1,23 @@
+name: build
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  host-app:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build host app
+        run: dotnet build AudioCtrl/AudioCtrl.csproj -c Release
+      # 固件 (firmware) 需要 STM32CubeIDE, 暂不在 CI 构建——
+      # 主循环改动请在本地跑 headless build 验证后再提交

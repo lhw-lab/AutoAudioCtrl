@@ -1,0 +1,118 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <!--
+        English language pack. Key set must stay in sync with Lang.zh-CN.xaml.
+        Note: log output stays Chinese (developer-facing); only UI strings switch.
+    -->
+
+    <!-- App -->
+    <sys:String x:Key="S.App.Title">Auto Audio Control</sys:String>
+    <sys:String x:Key="S.App.SingleInstance">Auto Audio Control is already running. Look for it in the system tray (double-click the tray icon to open the main window).</sys:String>
+    <sys:String x:Key="S.App.CrashLoop">The app hit repeated errors and must exit. Check the logs (Logs/ folder) for details.</sys:String>
+
+    <!-- Common -->
+    <sys:String x:Key="S.Common.Yes">Yes</sys:String>
+    <sys:String x:Key="S.Common.No">No</sys:String>
+    <sys:String x:Key="S.Common.Ok">OK</sys:String>
+
+    <!-- Theme button & menu -->
+    <sys:String x:Key="S.Theme.Button">🌓 Theme</sys:String>
+    <sys:String x:Key="S.Theme.Tooltip">Switch theme: System / Light / Dark</sys:String>
+    <sys:String x:Key="S.Theme.System">System</sys:String>
+    <sys:String x:Key="S.Theme.Light">Light</sys:String>
+    <sys:String x:Key="S.Theme.Dark">Dark</sys:String>
+
+    <!-- Language button & menu -->
+    <sys:String x:Key="S.Lang.Button">🌐 Language</sys:String>
+    <sys:String x:Key="S.Lang.Tooltip">Switch UI language: System / 中文 / English</sys:String>
+    <sys:String x:Key="S.Lang.System">System</sys:String>
+    <sys:String x:Key="S.Lang.Zh">中文</sys:String>
+    <sys:String x:Key="S.Lang.En">English</sys:String>
+
+    <!-- Title bar buttons -->
+    <sys:String x:Key="S.Btn.Minimize">Minimize to tray</sys:String>
+    <sys:String x:Key="S.Btn.Close">Close to tray</sys:String>
+    <sys:String x:Key="S.Btn.Refresh">↻ Refresh</sys:String>
+
+    <!-- Section titles -->
+    <sys:String x:Key="S.Sec.Playback">Playback Devices</sys:String>
+    <sys:String x:Key="S.Sec.Recording">Recording Devices</sys:String>
+    <sys:String x:Key="S.Sec.Stand">Headphone Stands</sys:String>
+    <sys:String x:Key="S.Sec.Mapping">Mappings</sys:String>
+
+    <!-- Stands -->
+    <sys:String x:Key="S.Stand.Hint">Right-click a device card to assign it to a stand (auto-switch on lift)</sys:String>
+    <sys:String x:Key="S.Stand.IdFmt">Stand {0}</sys:String>
+    <sys:String x:Key="S.Stand.Lifted">Lifted</sys:String>
+    <sys:String x:Key="S.Stand.OnStand">On stand</sys:String>
+    <sys:String x:Key="S.Stand.LastEventFmt">Last event {0}</sys:String>
+    <sys:String x:Key="S.Stand.None">No stands found — plug one in and it will appear here</sys:String>
+    <sys:String x:Key="S.Stand.OnlineFmt">{0} stand(s) connected</sys:String>
+    <sys:String x:Key="S.Stand.Offline">No stand connected</sys:String>
+    <sys:String x:Key="S.Stand.Detecting">Detecting stands...</sys:String>
+
+    <!-- Devices -->
+    <sys:String x:Key="S.Dev.Connected">Connected</sys:String>
+    <sys:String x:Key="S.Dev.Disconnected">Disconnected</sys:String>
+    <sys:String x:Key="S.Dev.PlaybackEmpty">No connected playback devices</sys:String>
+    <sys:String x:Key="S.Dev.RecordingEmpty">No connected recording devices</sys:String>
+    <sys:String x:Key="S.Dev.Show">Show disconnected devices</sys:String>
+    <sys:String x:Key="S.Dev.Hide">Hide disconnected devices</sys:String>
+    <sys:String x:Key="S.Dev.CountFmt">({0})</sys:String>
+    <sys:String x:Key="S.Dev.TypePlayback">Playback</sys:String>
+    <sys:String x:Key="S.Dev.TypeRecording">Recording</sys:String>
+
+    <!-- Status texts -->
+    <sys:String x:Key="S.Status.PlaybackFmt">{0} playback device(s)</sys:String>
+    <sys:String x:Key="S.Status.RecordingFmt">{0} recording device(s)</sys:String>
+    <sys:String x:Key="S.Status.DefaultMarked"> (defaults marked)</sys:String>
+    <sys:String x:Key="S.Status.SummaryFmt">{0} device(s) connected</sys:String>
+    <sys:String x:Key="S.Status.SummaryDiscFmt">{0} connected, {1} disconnected</sys:String>
+    <sys:String x:Key="S.Status.Enumerating">Enumerating audio devices...</sys:String>
+    <sys:String x:Key="S.Status.EnumFail">Enumerate failed: {0}</sys:String>
+    <sys:String x:Key="S.Status.Waiting">Waiting for stand events...</sys:String>
+
+    <!-- Mapping section -->
+    <sys:String x:Key="S.Map.Hint">Right-click a device card to configure; click ✕ to remove</sys:String>
+    <sys:String x:Key="S.Map.None">No mappings yet — right-click a device card to set "when placed" or "when lifted"</sys:String>
+    <sys:String x:Key="S.Map.FallbackTitle">When all placed (fallback)</sys:String>
+    <sys:String x:Key="S.Map.PbPrefix">Playback → </sys:String>
+    <sys:String x:Key="S.Map.MicPrefix">Mic → </sys:String>
+    <sys:String x:Key="S.Map.LiftPbPrefix">Playback on lift → </sys:String>
+    <sys:String x:Key="S.Map.DeviceMissing">(device offline)</sys:String>
+    <sys:String x:Key="S.Map.DeleteTip">Remove this mapping</sys:String>
+
+    <!-- Device card context menu -->
+    <sys:String x:Key="S.Ctx.PlacePb">Use for playback when headphones placed</sys:String>
+    <sys:String x:Key="S.Ctx.PlaceRec">Use for recording when headphones placed</sys:String>
+    <sys:String x:Key="S.Ctx.Lift">Use this device when lifted</sys:String>
+    <sys:String x:Key="S.Ctx.NoStands"> (no stand online)</sys:String>
+    <sys:String x:Key="S.Ctx.LiftedMark"> (lifted)</sys:String>
+
+    <!-- Paired mic prompt -->
+    <sys:String x:Key="S.Mic.Title">Paired microphone</sys:String>
+    <sys:String x:Key="S.Mic.Body">"{0}" has a built-in microphone.
+
+Switch the microphone to it too when the headphones are lifted?
+(You can later assign a different mic by right-clicking a recording device)</sys:String>
+
+    <!-- Event history -->
+    <sys:String x:Key="S.Hist.Lift">lifted</sys:String>
+    <sys:String x:Key="S.Hist.Place">placed</sys:String>
+    <sys:String x:Key="S.Hist.Fmt">{0} Stand {1} {2}</sys:String>
+
+    <!-- Tray -->
+    <sys:String x:Key="S.Tray.Tip">Auto Audio Control - double-click to open</sys:String>
+    <sys:String x:Key="S.Tray.Open">Open main window</sys:String>
+    <sys:String x:Key="S.Tray.Quick">Quick switch device</sys:String>
+    <sys:String x:Key="S.Tray.AutoStart">Start with Windows</sys:String>
+    <sys:String x:Key="S.Tray.Exit">Exit</sys:String>
+    <sys:String x:Key="S.Tray.PbGroup">[Playback]</sys:String>
+    <sys:String x:Key="S.Tray.RecGroup">[Recording]</sys:String>
+    <sys:String x:Key="S.Tray.NoDevices">(no connected devices)</sys:String>
+    <sys:String x:Key="S.Tray.DefaultFmt">[Default] {0}</sys:String>
+
+    <!-- Toast -->
+    <sys:String x:Key="S.Toast.DefaultFmt">Set as default {0} device</sys:String>
+</ResourceDictionary>

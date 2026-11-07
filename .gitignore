@@ -1,0 +1,33 @@
+# ===== 上位机 AudioCtrl =====
+# .NET 构建产物
+AudioCtrl/bin/
+AudioCtrl/obj/
+AudioCtrl/*.user
+AudioCtrl/.vs/
+AudioCtrl/.idea/
+AudioCtrl/.vscode/
+
+# 运行期生成（便携模式，日志与配置不入库）
+AudioCtrl/**/Logs/
+AudioCtrl/**/Config/
+AudioCtrl/publish/
+AudioCtrl/dist/
+
+# ===== 固件 firmware =====
+firmware/Debug/
+firmware/Release/
+firmware/*.map
+firmware/*.lst
+firmware/*.o
+firmware/*.elf
+firmware/*.bin
+firmware/*.hex
+firmware/*.su
+firmware/*.launch
+*.cproject.bak
+*.project.bak
+
+# ===== 通用 =====
+Thumbs.db
+Desktop.ini
+.DS_Store

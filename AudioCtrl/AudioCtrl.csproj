@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- WinExe：发布后不显示黑色控制台窗口 -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- v0.13.0: 去 WinForms，托盘改为 Shell_NotifyIcon 原生实现 -->
+    <UseWindowsForms>false</UseWindowsForms>
+    <!-- 应用版本号，每次升级时递增 -->
+    <Version>0.16.1</Version>
+    <ApplicationIcon>AudioCtrl.ico</ApplicationIcon>
+    <AssemblyName>AudioCtrl</AssemblyName>
+    <RootNamespace>AudioCtrl</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- Release 发布不生成调试符号（去掉 .pdb 文件） -->
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- v0.13.0: 去掉 HidLibrary 与 System.Management,项目零 NuGet 依赖
+         (HID 枚举=自写 SetupAPI,热插拔=WM_DEVICECHANGE 窗口消息) -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ico 同时打包为 WPF Resource：运行时由 AppIcon 读取（窗口图标 + 托盘 HICON） -->
+    <Resource Include="AudioCtrl.ico" />
+  </ItemGroup>
+
+</Project>

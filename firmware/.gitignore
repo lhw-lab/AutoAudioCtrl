@@ -1,0 +1,27 @@
+# STM32CubeIDE build outputs
+Debug/
+Release/
+
+# Build artifacts
+*.o
+*.d
+*.elf
+*.bin
+*.hex
+*.map
+*.su
+*.a
+*.lib
+
+# STM32CubeMX generated
+.mxproject
+
+# IDE settings
+.settings/
+
+# VSCode
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
