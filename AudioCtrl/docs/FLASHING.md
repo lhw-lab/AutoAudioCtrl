@@ -1,6 +1,6 @@
 # 烧录固件 / Flashing the Firmware
 
-> 不懂烧录？把本文件发给任意 AI 助手（豆包 / DeepSeek / 你的编程智能体），说"带我完成这件事"，
+> 不懂烧录？把本文件发给任意 AI 助手，说"带我完成这件事"，
 > 它会一步步指导你；接完线拍张照片发给它检查。
 > Not familiar with flashing? Send this file to any AI assistant and say
 > "walk me through this" — it will guide you step by step.
