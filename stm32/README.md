@@ -26,7 +26,7 @@
 ## 烧录
 
 需要 ST-Link + [STM32CubeProgrammer](https://www.st.com)（免费），
-固件 hex 可从 [v0.16.1 Release](https://github.com/lhw-lab/AutoAudioCtrl/releases/tag/v0.16.1) 下载，或从本目录源码自行编译。
+固件 hex 可从 [v0.16.1 Release](https://github.com/lhw-lab/PickUpAudio/releases/tag/v0.16.1) 下载，或从本目录源码自行编译。
 
 ```bash
 STM32_Programmer_CLI -c port=SWD -w firmware_v0.16.1.hex -v -rst
