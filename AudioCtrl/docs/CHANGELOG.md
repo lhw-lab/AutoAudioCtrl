@@ -2,6 +2,83 @@
 
 Public-facing version history.
 
+## v0.17.0 — 2026-11-15 — v2 hardware platform (ESP32-C3, USB serial)
+
+- **Renamed**: 自动音频控制 / Auto Audio Control → **架上知音 / PickUp Audio**
+- New `hardware/` directory: 3D-printable stand models (STL) + photos + assembly
+  guide — the reference enclosure is now part of the repo
+  (exe filename, namespace, and config paths unchanged — upgrades are seamless)
+- Fixed capture-only device mappings: a stand can now switch a recording device
+  on lift, or an all-placed fallback microphone, without also configuring a
+  playback device (previously the scheduler ignored capture-only mappings)
+- Default-device no-op skip now requires Console, Multimedia and Communications
+  to all point at the target; per-role default differences are corrected
+- Serial unplug no longer blocks the UI thread: port close moved outside the
+  service lock and runs off the UI thread; disconnect notification fires once
+- Host writes check the actual byte count (serial + HID); turning the toast
+  toggle off closes the currently visible toast; esptool's `python -m esptool`
+  fallback is validated before the flash button is enabled
+- Added host unit tests (HID protocol, serial framing, scheduler) to CI; version
+  is single-sourced from `Directory.Build.props`; release packaging cleans stale
+  runtime artifacts and validates the requested version
+- Docs: documented the GPIO9 BOOT strapping constraint for future solder-free
+  enclosures (holding BOOT low at power-up enters the ROM downloader)
+- New stand transport: USB CDC serial alongside USB HID. `IStandTransport`
+  abstraction with two implementations (`StandHidService` kept as-is, new
+  `StandSerialService`) aggregated by `StandTransportHub` — old STM32 HID
+  stands and new C3 serial stands work simultaneously, bindings and scheduler
+  unchanged (same 8-byte protocol payload, see PROTOCOL.md "Serial transport")
+- Serial discovery without COM-number coupling: VID-prefiltered enumeration
+  (Espressif `0x303A`, read-only registry views) + protocol handshake probe
+  (QUERY → INFO within 1.5 s); non-stand ports are closed silently, Bluetooth
+  and modem ports are never opened
+- Host serial writes flush after every frame (`FlushFileBuffers`) — usbser.sys
+  buffers small writes and an unflushed ACK loses the 300 ms retransmit race
+  (measured round-trip with flush: ~1 ms)
+- Stand cards show transport type (HID / USB Serial); serial stands (C3
+  firmware ≥ v2.1) get a right-click "simulate lift/place" bench-test command
+- New firmware `firmware-c3/` (PlatformIO + Arduino core): same protocol
+  payload over 11-byte framed serial (magic + payload + CRC8), stand ID from
+  eFuse MAC, 30 ms debounce, 300 ms × 4 retransmit, task watchdog, periodic
+  banner until first host frame, remote TEST command + ACK echo for
+  hardware-in-the-loop testing (`firmware-c3/tools/`: probe + automated test
+  scripts, 11/11 checks passing on real hardware)
+- One-click in-app flashing (new C3 boards): "刷固件" opens a dialog that
+  releases the port, runs bundled esptool (release: `Tools\esptool.exe`;
+  dev fallbacks: PlatformIO's bundled python+esptool — no system Python
+  needed — then pip-installed `python -m esptool` + PlatformIO build dir),
+  writes the three C3 images (bootloader 0x0 / partitions 0x8000 / app
+  0x10000) with live progress, then the board auto-resets and is re-recognized
+  as a stand. Unrecognized Espressif ports (fresh boards) surface as
+  preselected candidates. esptool is GPLv2+ invoked as a separate process
+  (mere aggregation), registered in THIRD-PARTY-NOTICES alongside the Arduino-ESP32 core (LGPL-2.1)
+- C3 firmware v2.3 — **dual trigger sources**: the micro switch (GPIO0, with
+  GPIO2 driven low as the ground side) and the on-board BOOT key (GPIO9) are
+  equivalent sensors — whichever key last changed takes over as the trigger,
+  so an unsoldered board works via BOOT alone and touching the switch later
+  switches back. Both keys share semantics: pressed = placed, released = lifted
+- **Delete a stand** (right-click its card): removes the stand and all of its
+  device mappings; warns when the stand is still plugged in (it would
+  reappear on its next event)
+- Scheduler: stands without mappings are **skipped instead of blocking** —
+  previously one unmapped lifted stand could swallow every other stand's
+  place-to-fallback switch
+- Toast improvements: playback + recording switches of the same action merge
+  into a single notification (250 ms merge window); new tray toggle
+  "切换通知" silences all notifications (persisted)
+- Fixed a toast storm: re-setting an endpoint that is already the default
+  still fires Windows default-change callbacks (×3 roles) — the scheduler now
+  skips no-op sets and the ViewModel only toasts on actual device changes
+- INFO frames from C3's ACK-echo are logged at DEBUG level ("上线" reserved
+  for genuine connections)
+- Fixed a transport-label regression: unplugging a serial stand could flip its
+  card back to "HID"; `StandRuntime.TransportKind` now remembers the last
+  connected transport and stays correct while offline
+- Real-hardware regression: C3 serial + STM32 HID stands online together
+  (last-lifted-wins, single place-back fallback, all-placed fallback all passed),
+  115-press stress test with zero sequence gaps, and the STM32 tier clean under
+  the v2 host
+
 ## v0.16.1 — 2026-11-07
 
 Closeout round from a second external review (7.3 → target 8.0):

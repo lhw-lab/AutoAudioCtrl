@@ -14,20 +14,33 @@ AudioCtrl/publish/
 AudioCtrl/dist/
 
 # ===== 固件 firmware =====
-firmware/Debug/
-firmware/Release/
-firmware/*.map
-firmware/*.lst
-firmware/*.o
-firmware/*.elf
-firmware/*.bin
-firmware/*.hex
-firmware/*.su
-firmware/*.launch
+stm32/firmware/Debug/
+stm32/firmware/Release/
+stm32/firmware/*.map
+stm32/firmware/*.lst
+stm32/firmware/*.o
+stm32/firmware/*.elf
+stm32/firmware/*.bin
+stm32/firmware/*.hex
+stm32/firmware/*.su
+stm32/firmware/*.launch
 *.cproject.bak
 *.project.bak
+
+# ===== 固件 firmware-c3 (PlatformIO 构建产物不入库) =====
+firmware-c3/.pio/
+firmware-c3/**/__pycache__/
+
+# ===== 测试项目 tests =====
+tests/**/bin/
+tests/**/obj/
+tests/**/TestResults/
+*.trx
 
 # ===== 通用 =====
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# ===== 发布产物（pack-release.ps1 输出，不入库） =====
+AudioCtrl-portable-*.zip

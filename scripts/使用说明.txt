@@ -1,0 +1,55 @@
+架上知音 (PickUp Audio) — 使用说明
+=================================================
+
+【这是什么】
+拿起耳机自动把声音切到耳机、放回支架自动切回外放的智能耳机支架配套软件。
+本压缩包是免安装便携版：解压即用，无需管理员权限，完全离线。
+
+【快速上手】
+1. 把本文件夹解压到任意位置（建议非系统盘，如 D:\AudioCtrl）
+2. 双击 AudioCtrl.exe 运行
+   * 首次运行 Windows SmartScreen 可能提示"已保护你的电脑"：
+     点「更多信息」→「仍要运行」即可（exe 未签名属正常现象）
+3. 插上耳机支架（USB），自动识别
+   * ESP32-C3 支架：全新未刷固件的板子会被检测为待烧录设备，
+     软件内点「刷固件」一键完成（本包自带 Tools\esptool.exe，无需另装任何工具）
+   * STM32 支架：即插即用
+4. 右键设备卡片配置绑定：
+   * "耳机拿起时使用此设备" → 选择支架
+   * "耳机放下时使用此设备播放/录制"（外放/麦克风）
+5. 拿起、放回耳机各一次，右下角会弹出切换提示——完成！
+
+【开机自启动】
+默认已开启：程序首次运行会自动注册开机自启（登录后静默驻留托盘，
+不弹窗口）。想关闭/开启：右键托盘图标 → 「开机自启」。
+
+【常用操作】
+* 双击托盘图标：打开主窗口
+* 托盘右键：快速切换设备 / 开机自启开关 / 切换通知开关 / 退出
+* 关闭窗口 = 最小化到托盘（从托盘菜单才能真正退出）
+* 支架卡片右键：删除支架（含映射清除）、串口支架可「模拟拿起/放回」
+* 板上 BOOT 键与外接微动开关互为等效触发源——动哪个键哪个生效
+* 程序设置与日志保存在本文件夹内（Config/ 与 Logs/）
+
+【卸载】
+托盘图标右键 → 退出，然后删除整个文件夹即可，零残留。
+（若曾把程序放在只读目录运行过，请一并删除 %LOCALAPPDATA%\AudioCtrl\）
+
+【自制支架 / 烧录固件】
+推荐 ESP32-C3 路线：一块十来块的 C3 小板 + 一个微动开关（引脚直插板上排针孔焊 2 个点），
+软件内一键烧录——详见项目仓库 README 与 docs/FLASHING.md。
+仓库地址见发布页说明。
+
+【许可】
+本软件原创代码以 MIT 许可发布（见 LICENSE）；内含的 .NET 运行时、esptool
+及 ST/Espressif 库许可见 THIRD-PARTY-NOTICES.md。
+
+---
+PickUp Audio (portable, no install needed)
+Unzip anywhere, run AudioCtrl.exe. First run: SmartScreen "More info"
+-> "Run anyway". Plug in the stand, right-click a device card to bind,
+lift/place your headphones. Start-with-Windows is ON by default (tray
+menu to toggle; notification toggle also in tray menu). One-click firmware
+flashing for new ESP32-C3 boards. The on-board BOOT button works as an
+alternative trigger — whichever key was touched last takes over.
+Uninstall = exit from tray + delete the folder. License: MIT.

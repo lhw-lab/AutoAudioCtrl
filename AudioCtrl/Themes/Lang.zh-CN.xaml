@@ -8,8 +8,8 @@
     -->
 
     <!-- 应用 -->
-    <sys:String x:Key="S.App.Title">自动音频控制</sys:String>
-    <sys:String x:Key="S.App.SingleInstance">自动音频控制已在运行，请在系统托盘中找到它（双击托盘图标可打开主窗口）。</sys:String>
+    <sys:String x:Key="S.App.Title">架上知音</sys:String>
+    <sys:String x:Key="S.App.SingleInstance">架上知音已在运行，请在系统托盘中找到它（双击托盘图标可打开主窗口）。</sys:String>
     <sys:String x:Key="S.App.CrashLoop">程序出现连续异常，即将退出。请查看日志（Logs/ 目录）排查原因。</sys:String>
 
     <!-- 通用 -->
@@ -52,6 +52,28 @@
     <sys:String x:Key="S.Stand.OnlineFmt">已连接 {0} 个耳机支架</sys:String>
     <sys:String x:Key="S.Stand.Offline">未发现耳机支架</sys:String>
     <sys:String x:Key="S.Stand.Detecting">正在检测支架...</sys:String>
+    <sys:String x:Key="S.Stand.DelMenu">删除此支架（含映射）</sys:String>
+    <sys:String x:Key="S.Stand.DelTitle">删除支架</sys:String>
+    <sys:String x:Key="S.Stand.DelConfirm">确定删除支架 {0}？</sys:String>
+    <sys:String x:Key="S.Stand.DelMap">将同时删除它的全部设备映射。</sys:String>
+    <sys:String x:Key="S.Stand.DelOnline">该支架当前仍在线：删除后它再上报事件会重新出现，建议先拔掉 USB 再删。</sys:String>
+    <sys:String x:Key="S.Stand.TransportSerial">USB 串口</sys:String>
+    <sys:String x:Key="S.Stand.TransportHid">HID</sys:String>
+    <sys:String x:Key="S.Stand.Simulate">模拟拿起/放回（测试）</sys:String>
+
+    <!-- 一键烧录(ESP32-C3 新板) -->
+    <sys:String x:Key="S.Flash.Open">刷固件</sys:String>
+    <sys:String x:Key="S.Flash.Title">烧录固件（ESP32-C3 新板）</sys:String>
+    <sys:String x:Key="S.Flash.Body">把新板插到 USB，端口会出现在列表里；选端口点"开始烧录"即可。烧录约几秒，完成后板子自动重启并被识别为支架（全程无需按键）。</sys:String>
+    <sys:String x:Key="S.Flash.Port">端口</sys:String>
+    <sys:String x:Key="S.Flash.NoPorts">未发现候选端口——插上新板后重新打开本窗口</sys:String>
+    <sys:String x:Key="S.Flash.ToolSrc">esptool：{0}&#x0a;固件：{1}</sys:String>
+    <sys:String x:Key="S.Flash.NoTool">未找到 esptool 或固件镜像（发布包应内置 Tools\esptool.exe 与 Firmware\ 目录；开发环境需 pip 安装 esptool 并先编译 firmware-c3）</sys:String>
+    <sys:String x:Key="S.Flash.Start">开始烧录</sys:String>
+    <sys:String x:Key="S.Flash.Close">关闭</sys:String>
+    <sys:String x:Key="S.Flash.Running">烧录中…（请勿拔出板子）</sys:String>
+    <sys:String x:Key="S.Flash.Done">✔ 烧录完成，板子已重启，稍候将被识别为支架</sys:String>
+    <sys:String x:Key="S.Flash.Fail">✘ 烧录失败——换 USB 口/换数据线后重试，详情见日志</sys:String>
 
     <!-- 设备 -->
     <sys:String x:Key="S.Dev.Connected">已连接</sys:String>
@@ -63,6 +85,7 @@
     <sys:String x:Key="S.Dev.CountFmt">({0} 个)</sys:String>
     <sys:String x:Key="S.Dev.TypePlayback">播放</sys:String>
     <sys:String x:Key="S.Dev.TypeRecording">录制</sys:String>
+    <sys:String x:Key="S.Dev.Unknown">未知设备</sys:String>
 
     <!-- 状态文本 -->
     <sys:String x:Key="S.Status.PlaybackFmt">{0} 个播放设备</sys:String>
@@ -104,10 +127,11 @@
     <sys:String x:Key="S.Hist.Fmt">{0} 支架 {1} {2}</sys:String>
 
     <!-- 托盘 -->
-    <sys:String x:Key="S.Tray.Tip">自动音频控制 - 双击打开主窗口</sys:String>
+    <sys:String x:Key="S.Tray.Tip">架上知音 - 双击打开主窗口</sys:String>
     <sys:String x:Key="S.Tray.Open">打开主窗口</sys:String>
     <sys:String x:Key="S.Tray.Quick">快速切换设备</sys:String>
     <sys:String x:Key="S.Tray.AutoStart">开机自启</sys:String>
+    <sys:String x:Key="S.Tray.Toast">切换通知</sys:String>
     <sys:String x:Key="S.Tray.Exit">退出</sys:String>
     <sys:String x:Key="S.Tray.PbGroup">[播放]</sys:String>
     <sys:String x:Key="S.Tray.RecGroup">[录音]</sys:String>
@@ -116,4 +140,5 @@
 
     <!-- Toast 通知 -->
     <sys:String x:Key="S.Toast.DefaultFmt">已设为默认{0}设备</sys:String>
+    <sys:String x:Key="S.Toast.BothFmt">已设为默认播放与录制设备</sys:String>
 </ResourceDictionary>

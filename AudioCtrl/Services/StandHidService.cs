@@ -13,8 +13,11 @@ namespace AudioCtrl.Services;
 /// 读路径沿用原 HidService 的 overlapped ReadFile 模式(.NET 8 验证可用);
 /// 写路径用独立同步句柄 WriteFile(下行帧少且小,无需 overlapped)。
 /// </summary>
-public class StandHidService : IDisposable
+public class StandHidService : IStandTransport
 {
+    /// <summary>传输名(日志/诊断)</summary>
+    public string Name => "HID";
+
     /// <summary>支架固件的 VID(STMicroelectronics)</summary>
     public const int StandVid = 0x0483;
 
@@ -211,8 +214,14 @@ public class StandHidService : IDisposable
                 {
                     int err = Marshal.GetLastWin32Error();
                     Logger.Debug($"写下行帧失败,错误码 {err} (0x{err:X})");
+                    return false;
                 }
-                return ok;
+                if (written != (uint)buf.Length)
+                {
+                    Logger.Debug($"写下行帧只写入 {written}/{buf.Length} 字节;固件会按 300ms 重传兜底");
+                    return false;
+                }
+                return true;
             }
         }
 

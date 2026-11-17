@@ -7,8 +7,9 @@ namespace AudioCtrl.Helpers;
 public static class VersionInfo
 {
     /// <summary>
-    /// 当前应用版本号
-    /// 每次发布新版本时修改此值
+    /// 当前应用版本号——直接取程序集版本(由根目录 Directory.Build.props 的
+    /// &lt;Version&gt; 唯一维护),避免 csproj/代码两处手改后漂移。
     /// </summary>
-    public const string CurrentVersion = "0.16.1";
+    public static string CurrentVersion { get; } =
+        typeof(VersionInfo).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 }

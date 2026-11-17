@@ -1,0 +1,137 @@
+<Window x:Class="AudioCtrl.Views.FlashWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        SizeToContent="Height"
+        Width="480"
+        WindowStartupLocation="CenterScreen">
+    <!--
+        一键烧录对话框(v2):给未烧固件的新 C3 板(或重刷)写固件。
+        流程:释放本程序占用的端口 → esptool 写三段镜像 → 板子 hard_reset 自动重启
+        → 上位机经热插拔路径重新识别为支架。视觉与 AppMessageBox 同语言。
+    -->
+    <Border CornerRadius="10"
+            Background="{DynamicResource CardBackground}"
+            BorderBrush="{DynamicResource CardBorderBrush}"
+            BorderThickness="1"
+            Margin="14"
+            Padding="26,20"
+            MouseLeftButtonDown="OnDrag">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.45" />
+        </Border.Effect>
+        <Border.Resources>
+            <Style x:Key="DialogButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryText}" />
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="Padding" Value="20,8" />
+                <Setter Property="MinWidth" Value="96" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{DynamicResource CardBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="7"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ButtonHoverBackground}" />
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="DialogPrimaryButton" TargetType="Button" BasedOn="{StaticResource DialogButton}">
+                <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource WindowBackground}" />
+            </Style>
+        </Border.Resources>
+
+        <StackPanel>
+            <TextBlock Text="{DynamicResource S.Flash.Title}"
+                       FontSize="15"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource PrimaryText}"
+                       Margin="0,0,0,8" />
+            <TextBlock Text="{DynamicResource S.Flash.Body}"
+                       FontSize="12"
+                       TextWrapping="Wrap"
+                       LineHeight="19"
+                       Foreground="{DynamicResource SecondaryText}"
+                       Margin="0,0,0,14" />
+
+            <!-- 端口选择 -->
+            <TextBlock Text="{DynamicResource S.Flash.Port}"
+                       FontSize="12"
+                       Foreground="{DynamicResource PrimaryText}"
+                       Margin="0,0,0,4" />
+            <ComboBox x:Name="PortList"
+                      FontSize="13"
+                      Height="28"
+                      Margin="0,0,0,10" />
+            <TextBlock x:Name="PortHint"
+                       Text="{DynamicResource S.Flash.NoPorts}"
+                       FontSize="11"
+                       Foreground="{DynamicResource SecondaryText}"
+                       Margin="0,0,0,10" />
+
+            <!-- 工具/固件来源(发布包内置或开发环境回退) -->
+            <TextBlock x:Name="ToolStatus"
+                       FontSize="11"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource SecondaryText}"
+                       Margin="0,0,0,12" />
+
+            <!-- 进度 -->
+            <ProgressBar x:Name="FlashProgress"
+                         Height="6"
+                         Minimum="0" Maximum="100"
+                         IsIndeterminate="False"
+                         Margin="0,0,0,6" />
+            <TextBlock x:Name="StatusText"
+                       FontSize="12"
+                       Foreground="{DynamicResource PrimaryText}"
+                       Margin="0,0,0,10" />
+
+            <!-- esptool 输出尾部(等宽小字,最后 10 行) -->
+            <Border Background="{DynamicResource WindowBackground}"
+                    BorderBrush="{DynamicResource CardBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="8,6"
+                    MaxHeight="130">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <TextBlock x:Name="LogText"
+                               FontFamily="Consolas, Courier New"
+                               FontSize="11"
+                               TextWrapping="NoWrap"
+                               Foreground="{DynamicResource SecondaryText}" />
+                </ScrollViewer>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <Button Content="{DynamicResource S.Flash.Close}"
+                        Style="{StaticResource DialogButton}"
+                        Margin="0,0,10,0"
+                        Click="OnCloseClick" />
+                <Button x:Name="StartButton"
+                        Content="{DynamicResource S.Flash.Start}"
+                        Style="{StaticResource DialogPrimaryButton}"
+                        Click="OnStartClick" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

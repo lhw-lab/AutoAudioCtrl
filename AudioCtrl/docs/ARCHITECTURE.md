@@ -4,31 +4,56 @@ A quick map for anyone digging into the code. (Code comments are in Chinese; thi
 
 ## System overview
 
-Two cooperating parts:
+Three cooperating parts:
 
-- **`firmware/`** — STM32F103C8T6 firmware (STM32CubeIDE project). Polls the sensor switch with 30 ms debouncing, speaks the 8-byte HID protocol ([PROTOCOL.md](PROTOCOL.md)), retransmits events until ACKed, feeds an IWDG watchdog.
-- **`AudioCtrl/`** — Windows tray app (.NET 10, WPF, **zero NuGet dependencies**). Discovers stands, decodes frames, schedules device switches, exposes a single-page UI.
+- **`stm32/firmware/`** — STM32F103C8T6 firmware (archived STM32CubeIDE project,
+  legacy "engineer tier"). Polls the sensor switch with 30 ms debouncing, speaks the
+  8-byte protocol over USB HID ([PROTOCOL.md](PROTOCOL.md)), retransmits events
+  until ACKed, feeds an IWDG watchdog.
+- **`firmware-c3/`** — ESP32-C3 SuperMini firmware (PlatformIO + Arduino core 2.x).
+  Same 8-byte payload over USB CDC (11-byte framed, see PROTOCOL), stand ID from
+  the eFuse MAC, esp_task_wdt, bench-test commands (remote TEST toggle).
+- **`AudioCtrl/`** — Windows tray app (.NET 10, WPF, **zero NuGet dependencies**).
+  Discovers stands over two transports simultaneously, decodes frames, schedules
+  device switches, exposes a single-page UI.
 
 ## Host app layers
 
 ```
-HidDeviceEnumerator   SetupAPI enumeration (SetupDiGetClassDevs + HID interface GUID,
-                      VID/PID parsed from device path)
-        │
-StandHidService       one connection per stand: overlapped read thread + sync write
-                      handle; hot-plug diff via RefreshConnections()
-        │ 8-byte frames
-HidProtocol           frame build/parse (pure functions)
+StandTransportHub     aggregates transports, routes downlink frames by devicePath
+        ├── StandHidService     (IStandTransport) USB HID, VID 0483:572B
+        │     HidDeviceEnumerator   SetupAPI enumeration (SetupDiGetClassDevs +
+        │                           HID interface GUID, VID/PID from device path)
+        │     one connection per stand: overlapped read thread + sync write handle
+        └── StandSerialService  (IStandTransport) USB CDC serial, VID 303A:1001
+              ComPortEnumerator    VID-filtered COM discovery (SERIALCOMM ∩
+                                   Enum\USB registry views, both read-only)
+              SerialFrameCodec     A5 5A + payload + CRC8 wrap / stream resync
+              per-port connection: comm-timeout blocking read thread, sync write
+              + FlushFileBuffers, 1.5 s QUERY probe to confirm "our firmware"
+        │ 8-byte payload frames (identical for both transports)
+HidProtocol           frame build/parse (pure functions, shared by both transports)
         │
 StandScheduler        the brain: seq de-dup, ACK result codes, "last lifted wins",
-                      all-placed → fallback device
+                      all-placed → fallback device (transport-agnostic)
         │
 StandSettingsService  per-stand bindings persisted to Config/stand-settings.json
         │
 AudioDeviceService    Core Audio COM interop: enumerate devices, set default via
                       PolicyConfig (undocumented COM, same trick as SoundSwitch),
                       IMMNotificationClient callbacks
+
+EspToolFlasher         one-click flashing for new C3 boards (separate concern from
+                       transports): resolves bundled/dev esptool + firmware images,
+                       runs the write as a child process, parses progress. The Flash
+                       dialog coordinates with StandSerialService (release port,
+                       suppress reconnects, rescan after the board auto-resets)
 ```
+
+A C3 serial stand and an STM32 HID stand can be plugged in at the same time; the
+scheduler keys everything by stand ID (16-bit hash) and never looks at devicePath
+format. `StandRuntime.TransportKind` (set from the path on connect, remembered while offline) is
+display-only.
 
 UI: `MainWindow` (single page: device cards + right-click binding menus + mapping list + stand status), `TrayIconService` (raw `Shell_NotifyIcon` + WPF dark context menu), `SwitchToastWindow` (queued toasts), `AppMessageBox` (themed dialogs), `ThemeService` (light/dark/system), `LanguageService` + `Loc` (zh-CN / en-US language packs swapped as merged resource dictionaries).
 
@@ -42,6 +67,9 @@ Everything is Win32-clean: tray, HID enumeration, hot-plug (`WM_DEVICECHANGE`) a
 4. **WPF MenuItem toggles `IsChecked` before raising `Click`** — don't invert it again in the handler.
 5. Store stand bindings by **device ID**, never by name (Windows shows duplicate names for the same physical endpoint, e.g. a headset's stereo + hands-free profiles; also only bind `IsActive == true` endpoints).
 6. Firmware custom code lives strictly inside `/* USER CODE BEGIN/END */` blocks so CubeMX regeneration doesn't eat it.
+7. **Serial writes must `FlushFileBuffers`** — usbser.sys buffers small writes and does not push them onto the USB wire promptly. An unflushed ACK arrives too late against the firmware's 300 ms retransmit window and produces spurious retransmits (with flush the measured round-trip is ~1 ms). Applies to every `WriteFile` on a COM port in this codebase.
+8. **Never write to a CDC port the firmware side may consider disconnected** (C3 HWCDC `write` can block indefinitely when the host is gone, starving the watchdog). The C3 firmware guards with `(bool)Serial` and drops frames instead — events are covered by retransmit, so dropping is the correct v1-compatible behavior. On the host side, expect one OS-buffered retransmit race at worst; the scheduler's seq de-dup makes it harmless.
+9. **Don't discover serial stands by opening arbitrary COM ports.** Pre-filter by USB VID (Espressif `0x303A`) via the two registry views (`SERIALCOMM` ∩ `Enum\USB`), then protocol-probe with QUERY (1.5 s timeout). Opening unknown ports (Bluetooth modems, other people's Arduinos) has side effects.
 
 ## Debugging tricks that paid off
 

@@ -357,6 +357,13 @@ public class MainViewModel : ViewModelBase
 
     // ==================== 系统默认设备变更事件处理 ====================
 
+    // 上次观察到的默认设备 ID:Windows 的"默认设备变更"回调并不可靠——
+    // 对同一端点重复 SetDefaultEndpoint(无实际变化)也会触发,且按
+    // Console/Multimedia/Communications 三个角色连发多次。
+    // 只有 ID 真正变化才弹 Toast(程序启动注册时不触发回调,首次回调即真实变化)
+    private string? _lastDefPlaybackId;
+    private string? _lastDefRecordingId;
+
     /// <summary>
     /// 系统默认播放设备变更事件处理器
     /// 当用户在 Windows 设置中切换默认扬声器/耳机时触发
@@ -364,6 +371,14 @@ public class MainViewModel : ViewModelBase
     /// </summary>
     private void OnDefaultPlaybackChanged(string? newDefaultDeviceId)
     {
+        bool actuallyChanged = newDefaultDeviceId != _lastDefPlaybackId;
+        _lastDefPlaybackId = newDefaultDeviceId;
+        if (!actuallyChanged)
+        {
+            Logger.Debug($"[MainViewModel] 播放默认设备未变(重复回调),忽略: {newDefaultDeviceId}");
+            return;
+        }
+
         Logger.Info($"[MainViewModel] 系统默认播放设备变更: {newDefaultDeviceId}");
 
         // 清除所有播放设备的默认标记
@@ -387,6 +402,14 @@ public class MainViewModel : ViewModelBase
 
     private void OnDefaultRecordingChanged(string? newDefaultDeviceId)
     {
+        bool actuallyChanged = newDefaultDeviceId != _lastDefRecordingId;
+        _lastDefRecordingId = newDefaultDeviceId;
+        if (!actuallyChanged)
+        {
+            Logger.Debug($"[MainViewModel] 录制默认设备未变(重复回调),忽略: {newDefaultDeviceId}");
+            return;
+        }
+
         Logger.Info($"[MainViewModel] 系统默认录音设备变更: {newDefaultDeviceId}");
 
         // 清除所有录音设备的默认标记

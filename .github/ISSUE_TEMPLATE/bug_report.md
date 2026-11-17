@@ -5,9 +5,9 @@ labels: bug
 ---
 
 **环境 / Environment**
-- 程序版本 / App version:（如 v0.16.1）
+- 程序版本 / App version:（如 v0.17.0）
 - Windows 版本：
-- 支架硬件 / stand hardware:（自制 Blue Pill / 其他）
+- 支架硬件 / stand hardware:（ESP32-C3 / 其他）
 - 界面语言 / UI language:（中文 / English）
 
 **现象 / What happened**

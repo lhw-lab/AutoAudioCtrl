@@ -19,5 +19,34 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Build host app
         run: dotnet build AudioCtrl/AudioCtrl.csproj -c Release
+      - name: Test host app
+        run: dotnet test tests/AudioCtrl.Tests/AudioCtrl.Tests.csproj -c Release
       # 固件 (firmware) 需要 STM32CubeIDE, 暂不在 CI 构建——
       # 主循环改动请在本地跑 headless build 验证后再提交
+
+  firmware-c3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ hashFiles('firmware-c3/platformio.ini') }}
+      - name: Install PlatformIO
+        run: pip install platformio==6.2.0
+      - name: Build firmware-c3
+        run: pio run -d firmware-c3
+      - name: Upload firmware images
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-c3-images
+          path: |
+            firmware-c3/.pio/build/esp32c3/bootloader.bin
+            firmware-c3/.pio/build/esp32c3/partitions.bin
+            firmware-c3/.pio/build/esp32c3/firmware.bin
+          if-no-files-found: error

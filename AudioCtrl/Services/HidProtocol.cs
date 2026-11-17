@@ -18,6 +18,8 @@ public static class HidProtocol
     // ---- 下行消息类型 ----
     public const byte DnAck = 0x01;     // 事件确认
     public const byte DnQuery = 0x03;   // 身份/状态查询
+    public const byte DnTest = 0x05;    // 台架测试:C3 固件支持,翻转传感器测试位
+                                        // (等效按一次 BOOT 键;旧 STM32 固件忽略此帧)
 
     // ---- 事件值 ----
     public const byte EvLift = 0x01;    // 耳机拿起
@@ -39,6 +41,12 @@ public static class HidProtocol
     public static byte[] BuildQuery()
     {
         return new byte[FrameSize] { DnQuery, 0, 0, 0, 0, 0, 0, 0 };
+    }
+
+    /// <summary>构造 TEST 帧(台架测试:等效翻转一次传感器,仅 C3 固件响应)</summary>
+    public static byte[] BuildTest()
+    {
+        return new byte[FrameSize] { DnTest, 0x01, 0, 0, 0, 0, 0, 0 };
     }
 
     /// <summary>

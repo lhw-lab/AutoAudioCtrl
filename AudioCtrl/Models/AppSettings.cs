@@ -16,4 +16,7 @@ public class AppSettings
     /// <summary>开机自启（默认开；实际自启项在 HKCU Run 键，此字段是用户偏好，
     /// 用于区分"从未设置"和"明确关闭"，并供托盘菜单开关回显）</summary>
     public bool AutoStart { get; set; } = true;
+
+    /// <summary>切换通知 Toast（默认开；托盘菜单"切换通知"开关）</summary>
+    public bool ToastEnabled { get; set; } = true;
 }

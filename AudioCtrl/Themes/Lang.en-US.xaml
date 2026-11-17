@@ -7,8 +7,8 @@
     -->
 
     <!-- App -->
-    <sys:String x:Key="S.App.Title">Auto Audio Control</sys:String>
-    <sys:String x:Key="S.App.SingleInstance">Auto Audio Control is already running. Look for it in the system tray (double-click the tray icon to open the main window).</sys:String>
+    <sys:String x:Key="S.App.Title">PickUp Audio</sys:String>
+    <sys:String x:Key="S.App.SingleInstance">PickUp Audio is already running. Look for it in the system tray (double-click the tray icon to open the main window).</sys:String>
     <sys:String x:Key="S.App.CrashLoop">The app hit repeated errors and must exit. Check the logs (Logs/ folder) for details.</sys:String>
 
     <!-- Common -->
@@ -51,6 +51,28 @@
     <sys:String x:Key="S.Stand.OnlineFmt">{0} stand(s) connected</sys:String>
     <sys:String x:Key="S.Stand.Offline">No stand connected</sys:String>
     <sys:String x:Key="S.Stand.Detecting">Detecting stands...</sys:String>
+    <sys:String x:Key="S.Stand.DelMenu">Delete this stand (incl. mappings)</sys:String>
+    <sys:String x:Key="S.Stand.DelTitle">Delete stand</sys:String>
+    <sys:String x:Key="S.Stand.DelConfirm">Delete stand {0}?</sys:String>
+    <sys:String x:Key="S.Stand.DelMap">All of its device mappings will be deleted too.</sys:String>
+    <sys:String x:Key="S.Stand.DelOnline">This stand is still online — it will reappear if it reports again. Unplug its USB first if possible.</sys:String>
+    <sys:String x:Key="S.Stand.TransportSerial">USB Serial</sys:String>
+    <sys:String x:Key="S.Stand.TransportHid">HID</sys:String>
+    <sys:String x:Key="S.Stand.Simulate">Simulate lift/place (test)</sys:String>
+
+    <!-- One-click flashing (new ESP32-C3 board) -->
+    <sys:String x:Key="S.Flash.Open">Flash firmware</sys:String>
+    <sys:String x:Key="S.Flash.Title">Flash firmware (new ESP32-C3 board)</sys:String>
+    <sys:String x:Key="S.Flash.Body">Plug the new board into USB and its port appears in the list; pick it and press Flash. Takes a few seconds — the board restarts automatically and is recognized as a stand (no buttons needed).</sys:String>
+    <sys:String x:Key="S.Flash.Port">Port</sys:String>
+    <sys:String x:Key="S.Flash.NoPorts">No candidate ports — plug in the new board and reopen this window</sys:String>
+    <sys:String x:Key="S.Flash.ToolSrc">esptool: {0}&#x0a;firmware: {1}</sys:String>
+    <sys:String x:Key="S.Flash.NoTool">esptool or firmware images not found (release builds bundle Tools\esptool.exe and Firmware\; dev machines need pip-installed esptool and a built firmware-c3)</sys:String>
+    <sys:String x:Key="S.Flash.Start">Flash</sys:String>
+    <sys:String x:Key="S.Flash.Close">Close</sys:String>
+    <sys:String x:Key="S.Flash.Running">Flashing… (do not unplug the board)</sys:String>
+    <sys:String x:Key="S.Flash.Done">✔ Done — board restarted, will be recognized as a stand shortly</sys:String>
+    <sys:String x:Key="S.Flash.Fail">✘ Failed — try another USB port/cable, see log for details</sys:String>
 
     <!-- Devices -->
     <sys:String x:Key="S.Dev.Connected">Connected</sys:String>
@@ -62,6 +84,7 @@
     <sys:String x:Key="S.Dev.CountFmt">({0})</sys:String>
     <sys:String x:Key="S.Dev.TypePlayback">Playback</sys:String>
     <sys:String x:Key="S.Dev.TypeRecording">Recording</sys:String>
+    <sys:String x:Key="S.Dev.Unknown">Unknown device</sys:String>
 
     <!-- Status texts -->
     <sys:String x:Key="S.Status.PlaybackFmt">{0} playback device(s)</sys:String>
@@ -103,10 +126,11 @@ Switch the microphone to it too when the headphones are lifted?
     <sys:String x:Key="S.Hist.Fmt">{0} Stand {1} {2}</sys:String>
 
     <!-- Tray -->
-    <sys:String x:Key="S.Tray.Tip">Auto Audio Control - double-click to open</sys:String>
+    <sys:String x:Key="S.Tray.Tip">PickUp Audio - double-click to open</sys:String>
     <sys:String x:Key="S.Tray.Open">Open main window</sys:String>
     <sys:String x:Key="S.Tray.Quick">Quick switch device</sys:String>
     <sys:String x:Key="S.Tray.AutoStart">Start with Windows</sys:String>
+    <sys:String x:Key="S.Tray.Toast">Switch notifications</sys:String>
     <sys:String x:Key="S.Tray.Exit">Exit</sys:String>
     <sys:String x:Key="S.Tray.PbGroup">[Playback]</sys:String>
     <sys:String x:Key="S.Tray.RecGroup">[Recording]</sys:String>
@@ -115,4 +139,5 @@ Switch the microphone to it too when the headphones are lifted?
 
     <!-- Toast -->
     <sys:String x:Key="S.Toast.DefaultFmt">Set as default {0} device</sys:String>
+    <sys:String x:Key="S.Toast.BothFmt">Set as default playback &amp; recording device</sys:String>
 </ResourceDictionary>

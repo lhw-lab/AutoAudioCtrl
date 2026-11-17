@@ -13,7 +13,8 @@ namespace AudioCtrl;
 /// <summary>
 /// 主窗口代码(协议 v2 产品版)
 /// - 单页模式:设备卡片 + 右键映射菜单 + 支架状态区(设置/帮助页暂时移除)
-/// - HID 改为多支架管理(StandHidService)+ 调度器(StandScheduler)
+/// - 多支架管理:StandTransportHub 聚合 HID(旧 STM32)与串口(新 C3)两种传输
+///   + 调度器(StandScheduler,对传输类型无感知)
 /// - 全局快捷键功能未实现(HotkeyService 已随开源清理删除,见 CHANGELOG v0.15.1)
 /// </summary>
 public partial class MainWindow : Window
@@ -24,8 +25,14 @@ public partial class MainWindow : Window
     /// <summary>支架配置服务(Config/stand-settings.json)</summary>
     private readonly StandSettingsService _standSettings;
 
-    /// <summary>多支架 HID 连接管理器</summary>
-    private readonly StandHidService _standHid;
+    /// <summary>支架传输聚合器(HID 的旧 STM32 支架 + 串口的新 C3 支架并存)</summary>
+    private readonly StandTransportHub _standHub;
+
+    /// <summary>串口传输服务引用(烧录对话框要做端口释放/烧录抑制协调)</summary>
+    private readonly StandSerialService _serialService = new();
+
+    /// <summary>观察到但未识别的 Espressif 端口(未烧固件的新板;烧录对话框候选)</summary>
+    private readonly HashSet<string> _unknownPorts = new();
 
     /// <summary>支架调度器(拿起/放回 → 切换设备)</summary>
     private readonly StandScheduler _scheduler;
@@ -49,13 +56,16 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
         Title = $"{Loc.T("S.App.Title")} {_viewModel.AppVersion}";
 
-        // 支架产品服务链:配置 → 调度器 → HID 连接管理
+        // 支架产品服务链:配置 → 调度器 → 传输聚合(HID + 串口)
         _standSettings = new StandSettingsService();
         _scheduler = new StandScheduler(_viewModel.AudioDeviceService, _standSettings);
-        _standHid = new StandHidService();
+        _standHub = new StandTransportHub();
+        _standHub.Add(new StandHidService());        // 旧 STM32 支架(USB HID,协议 v2)
+        _standHub.Add(_serialService);               // 新 C3 支架(USB 串口,同载荷)
 
-        _standHid.FrameReceived += OnStandFrame;
-        _standHid.StandRemoved += OnStandRemoved;
+        _standHub.FrameReceived += OnStandFrame;
+        _standHub.StandRemoved += OnStandRemoved;
+        _serialService.UnknownDeviceSeen += OnUnknownDeviceSeen;
         _scheduler.StateChanged += OnSchedulerStateChanged;
 
         // 连接当前已插入的支架并向它们发 QUERY 收集身份
@@ -66,6 +76,9 @@ public partial class MainWindow : Window
 
         // 枚举音频设备
         _viewModel.RefreshAudioDevices();
+
+        // 切换通知开关按用户设置初始化(托盘菜单可切换)
+        Views.SwitchToastWindow.Enabled = _viewModel.Settings.ToastEnabled;
 
         // 系统托盘
         InitializeSystemTray();
@@ -81,8 +94,8 @@ public partial class MainWindow : Window
     /// </summary>
     private void RefreshStands()
     {
-        var paths = _standHid.RefreshConnections();
-        if (paths.Count > 0) _standHid.QueryAll();
+        var paths = _standHub.RefreshConnections();
+        if (paths.Count > 0) _standHub.QueryAll();
         RefreshStandList();
     }
 
@@ -99,7 +112,7 @@ public partial class MainWindow : Window
         if (ack != null)
         {
             // 发送移到线程池:避免同步 WriteFile 一旦阻塞卡死读线程(读线程必须永远活着收数据)
-            System.Threading.Tasks.Task.Run(() => _standHid.SendFrame(devicePath, ack));
+            System.Threading.Tasks.Task.Run(() => _standHub.SendFrame(devicePath, ack));
         }
 
         // 底部历史只记"拿起/放下"事件(可读文案),重传的重复帧不重复记录。
@@ -128,6 +141,73 @@ public partial class MainWindow : Window
     private void OnSchedulerStateChanged()
     {
         Dispatcher.Invoke(RefreshStandList);
+    }
+
+    /// <summary>
+    /// 支架卡片右键菜单:任何支架都有"删除"(含映射清空);
+    /// 在线的串口支架(C3 固件)另有"模拟拿起/放回"台架测试
+    /// </summary>
+    private void OnStandCardContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (sender is not Border border || border.DataContext is not StandRuntime stand) return;
+
+        // 菜单壳在 XAML 里已挂好(保证第一次右键即弹出),这里动态填充
+        var menu = border.ContextMenu ?? new ContextMenu { Style = (Style)border.FindResource("DarkContextMenu") };
+        menu.Items.Clear();
+        var itemStyle = (Style)border.FindResource("DarkMenuItem");
+        var sepStyle = (Style)border.FindResource("DarkMenuSeparator");
+
+        if (stand.Online && stand.TransportKind == "serial")
+        {
+            var simItem = new MenuItem
+            {
+                Style = itemStyle,
+                Header = Loc.T("S.Stand.Simulate")
+            };
+            simItem.Click += (_, _) =>
+            {
+                _standHub.SendFrame(stand.DevicePath!, HidProtocol.BuildTest());
+                Logger.Info($"[支架] 已发送模拟事件指令: {stand.StandIdHex}");
+            };
+            menu.Items.Add(simItem);
+            menu.Items.Add(new Separator { Style = sepStyle });
+        }
+
+        var delItem = new MenuItem
+        {
+            Style = itemStyle,
+            Header = Loc.T("S.Stand.DelMenu")
+        };
+        delItem.Click += (_, _) => DeleteStand(stand);
+        menu.Items.Add(delItem);
+    }
+
+    /// <summary>
+    /// 删除支架:清运行时条目 + 连带清掉它的映射,然后刷新界面。
+    /// 有映射或支架仍在线时弹确认(在线的删后若再上报事件会重新出现);
+    /// 离线且无映射的支架无破坏性,直接删
+    /// </summary>
+    private void DeleteStand(StandRuntime stand)
+    {
+        var m = _standSettings.GetMapping(stand.StandId);
+        bool hasMapping = m is { LiftPlaybackId: not null } || m is { LiftCaptureId: not null };
+
+        if (stand.Online || hasMapping)
+        {
+            var warns = new List<string>();
+            if (stand.Online) warns.Add(Loc.T("S.Stand.DelOnline"));
+            if (hasMapping) warns.Add(Loc.T("S.Stand.DelMap"));
+            bool yes = Views.AppMessageBox.Show(this, Loc.T("S.Stand.DelTitle"),
+                Loc.F("S.Stand.DelConfirm", stand.StandIdHex) + "\n\n" + string.Join("\n", warns),
+                yesNo: true);
+            if (!yes) return;
+        }
+
+        _standSettings.RemoveMapping(stand.StandId);
+        _scheduler.RemoveStand(stand.StandId);
+        RefreshStandList();
+        RefreshMappings();
+        Logger.Info($"[支架] 已删除支架 {stand.StandIdHex}(含映射)");
     }
 
     /// <summary>刷新支架列表 UI 与底部状态文本(UI 线程)</summary>
@@ -544,13 +624,37 @@ public partial class MainWindow : Window
         _trayIconService?.HideWindowToTray();
     }
 
+    /// <summary>
+    /// 观察到未识别的 Espressif 端口(未烧固件的新板,读线程回调)→
+    /// 记入候选列表,等用户点"刷固件"时预选
+    /// </summary>
+    private void OnUnknownDeviceSeen(string port)
+    {
+        Dispatcher.Invoke(() => _unknownPorts.Add(port));
+    }
+
+    /// <summary>"刷固件"按钮:打开一键烧录对话框(候选端口 = 未识别新板 + 在线串口支架)</summary>
+    private void OnFlashButtonClick(object sender, RoutedEventArgs e)
+    {
+        // 已确认的端口从"未识别"名单清掉(烧过固件后重扫确认的情况)
+        var connected = _serialService.ConnectedPaths.ToHashSet();
+        _unknownPorts.RemoveWhere(connected.Contains);
+
+        var candidates = new List<string>(_unknownPorts);
+        foreach (var p in connected)
+        {
+            candidates.Add(p);   // 在线支架也可重刷
+        }
+        new Views.FlashWindow(_serialService, candidates, RefreshStands) { Owner = this }.ShowDialog();
+    }
+
     /// <summary>窗口关闭时释放资源</summary>
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
         Logger.Info("窗口关闭，释放资源");
         _mainHwndSource?.RemoveHook(MainWndProc);
-        _standHid.Dispose();
+        _standHub.Dispose();
         _trayIconService?.Dispose();
     }
 }

@@ -279,6 +279,28 @@ public class TrayIconService : IDisposable
         };
         menu.Items.Add(autoStartItem);
 
+        // 切换通知开关（✓ 前缀回显,与自启开关同款交互）
+        bool toastState = _viewModel.Settings.ToastEnabled;
+        var toastItem = new MenuItem
+        {
+            Header = (toastState ? "✓ " : "　") + Loc.T("S.Tray.Toast"),
+            IsCheckable = true,
+            IsChecked = toastState,
+            Style = itemStyle,
+        };
+        toastItem.Click += (_, _) =>
+        {
+            bool newState = !toastState;
+            toastState = newState;
+            toastItem.IsChecked = newState;
+            toastItem.Header = (newState ? "✓ " : "　") + Loc.T("S.Tray.Toast");
+            _viewModel.Settings.ToastEnabled = newState;
+            new SettingsService().Save(_viewModel.Settings);
+            Views.SwitchToastWindow.Enabled = newState;
+            Logger.Info($"[托盘菜单] 切换通知: {(newState ? "开" : "关")}");
+        };
+        menu.Items.Add(toastItem);
+
         menu.Items.Add(Sep());
 
         // 退出

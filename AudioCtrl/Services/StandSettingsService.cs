@@ -22,9 +22,15 @@ public class StandSettingsService
     /// <summary>当前生效的配置(内存对象,修改后调用 Save 持久化)</summary>
     public StandAppSettings Current { get; private set; } = new();
 
-    public StandSettingsService()
+    public StandSettingsService(string? configPath = null)
     {
-        _configPath = ConfigStore.GetConfigPath("stand-settings.json");
+        _configPath = configPath ?? ConfigStore.GetConfigPath("stand-settings.json");
+        if (configPath != null)
+        {
+            // 测试用:指定独立文件时不读取用户配置,避免单测污染/依赖本机 Config。
+            Current = new StandAppSettings();
+            return;
+        }
         Load();
     }
 
@@ -86,5 +92,17 @@ public class StandSettingsService
             Current.Stands.Add(m);
         }
         return m;
+    }
+
+    /// <summary>删除指定支架的映射(用户删除支架时调用),持久化到配置文件</summary>
+    public void RemoveMapping(ushort standId)
+    {
+        var m = GetMapping(standId);
+        if (m != null)
+        {
+            Current.Stands.Remove(m);
+            Save();
+            Logger.Info($"[StandSettings] 已删除支架 {standId:X4} 的映射");
+        }
     }
 }

@@ -17,7 +17,7 @@ namespace AudioCtrl.Services;
 /// </summary>
 public class StandScheduler
 {
-    private readonly AudioDeviceService _audio;
+    private readonly IAudioDeviceService _audio;
     private readonly StandSettingsService _settings;
 
     /// <summary>standId → 运行时状态(含已离线但见过历史的支架)</summary>
@@ -28,7 +28,7 @@ public class StandScheduler
     /// <summary>状态变化(UI 需要刷新支架列表时触发,可能在读线程回调)</summary>
     public event Action? StateChanged;
 
-    public StandScheduler(AudioDeviceService audio, StandSettingsService settings)
+    public StandScheduler(IAudioDeviceService audio, StandSettingsService settings)
     {
         _audio = audio;
         _settings = settings;
@@ -54,6 +54,7 @@ public class StandScheduler
             {
                 var rt = GetOrCreate(standId);
                 rt.DevicePath = devicePath;   // 标记在线
+                rt.TransportKind = devicePath.StartsWith("COM", StringComparison.OrdinalIgnoreCase) ? "serial" : "hid";
 
                 // 去重:同一 seq 的重发(ACK 丢了),只补 ACK 不重复执行
                 if (seq == rt.LastSeq && rt.LastEventTime != default)
@@ -99,6 +100,7 @@ public class StandScheduler
                 bool isNewConnection = rt.DevicePath != devicePath;   // 首见或换了路径(重连)
                 bool wasLifted = rt.Lifted;
                 rt.DevicePath = devicePath;
+                rt.TransportKind = devicePath.StartsWith("COM", StringComparison.OrdinalIgnoreCase) ? "serial" : "hid";
                 rt.Lifted = sensorLifted == 1;
                 // false→true 的 INFO 对齐要刷新 LastLiftTime:
                 // "后拿起者优先"按此排序,若沿用离线前的旧时间,另一支架会被误判为更晚拿起。
@@ -115,7 +117,16 @@ public class StandScheduler
                     rt.LastResult = HidProtocol.AckOk;
                 }
 
-                Logger.Info($"[Scheduler] 支架 {infoId:X4} 上线: 固件 v{(fw >> 4)}.{fw & 0xF}, 耳机{(rt.Lifted ? "已被拿起" : "在架上")}");
+                // 日志分级:C3 固件的 ECHO_ON_ACK 设计会在每个事件 ACK 后回一帧 INFO,
+                // 已连接期间的这类回执不该刷"上线"——只有真(重)连接才值得记 Info
+                if (isNewConnection)
+                {
+                    Logger.Info($"[Scheduler] 支架 {infoId:X4} 上线: 固件 v{(fw >> 4)}.{fw & 0xF}, 耳机{(rt.Lifted ? "已被拿起" : "在架上")}");
+                }
+                else
+                {
+                    Logger.Debug($"[Scheduler] 支架 {infoId:X4} INFO 回执: 固件 v{(fw >> 4)}.{fw & 0xF}, 耳机{(rt.Lifted ? "已被拿起" : "在架上")}");
+                }
 
                 // 状态对齐的判定：传感器状态与主机认知不同才动。
                 //   启动时在架上(认知false,实际false) → 不动,不抢用户当前输出
@@ -176,35 +187,44 @@ public class StandScheduler
         byte result = HidProtocol.AckOk;
 
         // ---- 1. 决策:找出"当前应该用哪个设备" ----
-        StandRuntime? active;
+        // 在线且拿起的支架中,按最近拿起优先;**未配置映射的支架跳过而非阻塞**——
+        // 否则一个删了映射/忘了配置的支架耳机悬空时,会把其他支架的放回回退
+        // 和外放 fallback 全部堵死(表现为"放下耳机不切外放")
+        StandRuntime? active = null;
+        StandMapping? activeMapping = null;
         lock (_lock)
         {
-            active = _stands.Values
+            var candidates = _stands.Values
                 .Where(s => s.Online && s.Lifted)
-                .OrderByDescending(s => s.LastLiftTime)
-                .FirstOrDefault();
+                .OrderByDescending(s => s.LastLiftTime);
+            foreach (var c in candidates)
+            {
+                var m = _settings.GetMapping(c.StandId);
+                if (m is null || (m.LiftPlaybackId is null && m.LiftCaptureId is null))
+                {
+                    Logger.Warn($"[Scheduler] 支架 {c.StandIdHex} 已拿起但未配置播放/录制映射,调度时忽略");
+                    continue;
+                }
+                active = c;
+                activeMapping = m;
+                break;
+            }
         }
 
         if (active != null)
         {
-            // 有耳机被拿起 → 用该支架映射的设备
-            var m = _settings.GetMapping(active.StandId);
-            if (m?.LiftPlaybackId == null)
-            {
-                Logger.Warn($"[Scheduler] 支架 {active.StandIdHex} 未配置映射,不切换");
-                return HidProtocol.AckNoMapping;
-            }
-            targetPlayback = m.LiftPlaybackId;
-            targetCapture = m.LiftCaptureId;
+            // 有(已配置映射的)耳机被拿起 → 用该支架映射的设备
+            targetPlayback = activeMapping!.LiftPlaybackId;
+            targetCapture = activeMapping.LiftCaptureId;
         }
         else
         {
             // 全部放回 → 用 fallback(外放);未配置则不切
             targetPlayback = _settings.Current.FallbackPlaybackId;
             targetCapture = _settings.Current.FallbackCaptureId;
-            if (targetPlayback == null)
+            if (targetPlayback == null && targetCapture == null)
             {
-                Logger.Info("[Scheduler] 全部放回,但未配置外放设备,不切换");
+                Logger.Info("[Scheduler] 全部放回,但未配置外放播放/录制设备,不切换");
                 return HidProtocol.AckNoMapping;
             }
         }
@@ -212,26 +232,46 @@ public class StandScheduler
         // ---- 2. 执行切换(按设备 ID,先枚举确认设备在线) ----
         var all = _audio.EnumerateDevices();
 
-        var pb = all.FirstOrDefault(d => d.Id == targetPlayback && d.IsActive);
-        if (pb == null)
+        var pb = targetPlayback != null
+            ? all.FirstOrDefault(d => d.Id == targetPlayback && d.IsActive)
+            : null;
+        if (targetPlayback != null)
         {
-            Logger.Warn($"[Scheduler] 目标播放设备不在线(ID 末段 ...{LastSegment(targetPlayback)}),放弃播放切换");
-            result = HidProtocol.AckDeviceMissing;
-        }
-        else
-        {
-            _audio.SetDefaultDevice(pb.Id, "Playback");
-            Logger.Info($"[Scheduler] 已切换播放设备 → {pb.Name}");
+            if (pb == null)
+            {
+                Logger.Warn($"[Scheduler] 目标播放设备不在线(ID 末段 ...{LastSegment(targetPlayback)}),放弃播放切换");
+                result = HidProtocol.AckDeviceMissing;
+            }
+            else if (pb.IsDefault && _audio.IsDefaultForAllRoles(pb.Id, "Playback"))
+            {
+                /* 只有三个角色都已是默认才跳过:对同一端点重复 SetDefaultEndpoint 也会
+                   触发 Windows 默认设备变更回调(按 3 个角色连发),导致假切换 Toast
+                   弹个不停;但只查 Multimedia 会漏掉用户按角色分离默认设备的场景。 */
+                Logger.Debug($"[Scheduler] 播放设备已是三角色默认,跳过设置: {pb.Name}");
+            }
+            else
+            {
+                _audio.SetDefaultDevice(pb.Id, "Playback");
+                Logger.Info($"[Scheduler] 已切换播放设备 → {pb.Name}");
+            }
         }
 
-        // 麦克风尽力而为:失败不影响播放结果码(事件主体是播放设备)
+        // 麦克风尽力而为:失败不影响播放结果码(事件主体是播放设备)。
+        // 只绑录制设备(没有播放映射)也必须执行,不能因为 targetPlayback 为空就跳过。
         if (targetCapture != null)
         {
             var cap = all.FirstOrDefault(d => d.Id == targetCapture && d.IsActive);
             if (cap != null)
             {
-                _audio.SetDefaultDevice(cap.Id, "Recording");
-                Logger.Info($"[Scheduler] 已切换录制设备 → {cap.Name}");
+                if (cap.IsDefault && _audio.IsDefaultForAllRoles(cap.Id, "Recording"))
+                {
+                    Logger.Debug($"[Scheduler] 录制设备已是三角色默认,跳过设置: {cap.Name}");
+                }
+                else
+                {
+                    _audio.SetDefaultDevice(cap.Id, "Recording");
+                    Logger.Info($"[Scheduler] 已切换录制设备 → {cap.Name}");
+                }
             }
             else
             {
@@ -246,6 +286,30 @@ public class StandScheduler
     public void OnMappingChanged()
     {
         RecomputeAndApply();
+        StateChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// 删除一个支架(用户显式操作):从运行时列表移除。
+    /// 若该支架当时在线且耳机处于拿起状态,按"拔线"语义重新调度(等同 HandleStandRemoved);
+    /// 映射清理由调用方(StandSettingsService)负责,调度器不碰配置。
+    /// 注意:在线支架被删后若再上报事件会重新出现(再次 GetOrCreate)——
+    /// UI 层负责在删除前向用户说明这一点
+    /// </summary>
+    public void RemoveStand(ushort standId)
+    {
+        bool needRecompute = false;
+        lock (_lock)
+        {
+            if (_stands.TryGetValue(standId, out var rt))
+            {
+                Logger.Info($"[Scheduler] 支架 {standId:X4} 已被用户删除(曾{(rt.Online ? "在线" : "离线")}" +
+                            $"{(rt.Lifted ? ",耳机拿起,按放回重新调度" : "")})");
+                if (rt.Online && rt.Lifted) needRecompute = true;
+                _stands.Remove(standId);
+            }
+        }
+        if (needRecompute) RecomputeAndApply();
         StateChanged?.Invoke();
     }
 

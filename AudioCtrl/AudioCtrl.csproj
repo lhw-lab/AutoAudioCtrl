@@ -9,8 +9,7 @@
     <UseWPF>true</UseWPF>
     <!-- v0.13.0: 去 WinForms，托盘改为 Shell_NotifyIcon 原生实现 -->
     <UseWindowsForms>false</UseWindowsForms>
-    <!-- 应用版本号，每次升级时递增 -->
-    <Version>0.16.1</Version>
+    <!-- 版本号统一由根目录 Directory.Build.props 提供 -->
     <ApplicationIcon>AudioCtrl.ico</ApplicationIcon>
     <AssemblyName>AudioCtrl</AssemblyName>
     <RootNamespace>AudioCtrl</RootNamespace>

@@ -68,6 +68,7 @@ public class StandRuntime : INotifyPropertyChanged
     private bool _lifted;
     private string? _devicePath;
     private DateTime _lastEventTime;
+    private string _transportKind = "hid";
 
     /// <summary>支架唯一 ID</summary>
     public ushort StandId { get; init; }
@@ -84,6 +85,17 @@ public class StandRuntime : INotifyPropertyChanged
 
     /// <summary>是否在线(USB 已连接)</summary>
     public bool Online => DevicePath != null;
+
+    /// <summary>
+    /// 传输类型(XAML DataTrigger 据此显示"HID"/"USB 串口"标签)。
+    /// 记忆最后连接时的类型,拔线(DevicePath=null)后保持不变——
+    /// 曾按 DevicePath 推导,拔线瞬间会误跳回"HID"
+    /// </summary>
+    public string TransportKind
+    {
+        get => _transportKind;
+        set { _transportKind = value; OnPropertyChanged(); }
+    }
 
     /// <summary>耳机是否被拿起</summary>
     public bool Lifted

@@ -1,53 +1,45 @@
 # 烧录固件 / Flashing the Firmware
 
 > 不懂烧录？把本文件发给任意 AI 助手，说"带我完成这件事"，
-> 它会一步步指导你；接完线拍张照片发给它检查。
-> Not familiar with flashing? Send this file to any AI assistant and say
-> "walk me through this" — it will guide you step by step.
+> 它会一步步指导你。
 
-## 流程总览 / Overview（懂的人看完就会）
+## ESP32-C3 一键烧录（唯一支持路线）
 
+**不需要买烧录器，不需要装驱动，不需要按板上任何按键。**
+C3 的 USB 是原生 Serial/JTAG，Win10/11 系统自带驱动，esptool 经 USB 复位
+自动进入烧录模式——整个流程就是"插上 → 点一下"。
+
+### 方式 A · 上位机界面内烧录（普通用户）
+
+1. 装好 AudioCtrl 上位机（见 README"下载与使用"）
+2. 把新板插到电脑 USB 口（**注意用数据线，不能用充电线**）
+3. 主界面耳机支架区右上角点"**刷固件**"
+4. 端口列表里选新板对应的 COM 口（插上新板后会自动出现在候选里）→ 点"开始烧录"
+5. 约 2 秒完成，板子自动重启，稍候被识别为"耳机支架"——关闭窗口去绑定设备即可
+
+### 方式 B · 命令行（开发者）
+
+```bash
+# 需 PlatformIO(VSCode 插件或 CLI);编译 + 烧录一步完成
+pio run -d firmware-c3 -t upload --upload-port COMx
 ```
-买 ST-Link → 装 STM32CubeProgrammer → 接 4 根线 → 烧 firmware hex → 插 USB 验证
-buy ST-Link → install STM32CubeProgrammer → wire 4 pins → flash hex → verify on USB
+
+或直接用 esptool 写 Release 提供的三个镜像（偏移固定）：
+
+```bash
+esptool --chip esp32c3 --port COMx --baud 921600 --after hard_reset write_flash ^
+  0x0 bootloader.bin 0x8000 partitions.bin 0x10000 firmware.bin
 ```
 
-固件文件：仓库 Release 页面的 `firmware_vX.Y.Z.hex`（无需自己编译固件）。
+### 常见问题
 
-## 硬事实 / Hard facts（AI 代劳的依据）
-
-**① 要买什么**：ST-Link V2 兼容下载器（淘宝/拼多多搜"ST-Link V2"，约 10~20 元，含 4 根杜邦线更佳）。
-
-**② 要装什么**：ST 官方 **STM32CubeProgrammer**（免费，官网 st.com 搜索该名称下载；
-下载页可能要求填写邮箱，属正常）。Windows 10/11 一般免驱识别 ST-Link。
-
-**③ 接线（共 4 根，别接错）**：
-
-| ST-Link 引脚 | 板子 SWD 四针 |
+| 现象 | 原因 / 处理 |
 |---|---|
-| SWDIO | SWDIO |
-| SWCLK | SWCLK |
-| GND | GND |
-| 3.3V | 3.3V |
+| 列表里没有端口 | USB 线是充电线（换数据线）；或板子不是原生 USB（带 CH340 的板，换 SuperMini） |
+| 烧录失败 `Failed to connect` | 换 USB 口 / 换线重试；按住 BOOT 再点一次开始（手动进烧录模式兜底） |
+| 烧录中报错端口被占用 | 关掉可能占着串口的程序（串口监视器/其他烧录工具）再试 |
+| 烧完没被识别 | 等 2 秒；拔插一次 USB；看上位机日志 Logs/ 目录 |
 
-- ⚠ **不要接到 5V**——可能烧板。
-- 板上 SWD 四针的位置见 [README 实拍图](../../README.zh-CN.md)（焊好开关那张照片右上角的 4 针排座）。
-- **BOOT0 跳线帽不用动**（SWD 烧录不需要碰它，保持默认即可）。
+---
 
-**④ 烧录命令**（装好 CubeProgrammer 后，管理员命令行；也可用其图形界面）：
-
-```
-STM32_Programmer_CLI -c port=SWD -w firmware_vX.Y.Z.hex -v -rst
-```
-
-**⑤ 成功判据**：拔掉 ST-Link，把板子 USB 口插到电脑——上位机界面 1 秒内出现"耳机支架"即成功。
-
-**⑥ 常见报错**：
-
-| 现象 | 原因 |
-|---|---|
-| `No target connected` | 线序错 / SWD 线没插紧 / 板子没供电 |
-| 找不到 `STM32_Programmer_CLI` 命令 | 未装或未加入 PATH——用图形界面同样能烧 |
-| ST-Link 灯不亮 / 无法识别 | 换 USB 口；装 ST 官方 ST-Link 驱动（STSW-LINK009） |
-
-**⑦ 完全不想动手**：淘宝买板子时把 hex 文件发给卖家，请店家代烧（多数免费或一两元）。
+> 旧版 STM32 硬件的烧录指南已迁至 [stm32/FLASHING-STM32.md](../../stm32/FLASHING-STM32.md)。

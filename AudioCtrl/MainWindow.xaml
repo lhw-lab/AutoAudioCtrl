@@ -173,6 +173,31 @@
             </Style>
 
             <!-- 布尔转可见性(菜单箭头用) -->
+            <!-- 小节标题旁的轻量文字按钮(如支架区的"刷固件") -->
+            <Style x:Key="SectionLinkButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource SecondaryText}" />
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="Padding" Value="8,2" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                    CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ButtonHoverBackground}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <!-- 映射删除小按钮 -->
             <Style x:Key="DeleteMappingButton" TargetType="Button">
                 <Setter Property="Background" Value="Transparent" />
@@ -566,6 +591,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0"
                                            Text="{DynamicResource S.Sec.Stand}"
@@ -578,7 +604,13 @@
                                            FontSize="11"
                                            Foreground="{DynamicResource SecondaryText}"
                                            VerticalAlignment="Center"
-                                           HorizontalAlignment="Right" />
+                                           HorizontalAlignment="Right"
+                                           Margin="0,0,10,0" />
+                                <Button Grid.Column="2"
+                                        Style="{StaticResource SectionLinkButton}"
+                                        Content="{DynamicResource S.Flash.Open}"
+                                        ToolTip="{DynamicResource S.Flash.Title}"
+                                        Click="OnFlashButtonClick" />
                             </Grid>
 
                             <!-- 支架列表 -->
@@ -590,7 +622,12 @@
                                                 BorderThickness="1"
                                                 CornerRadius="8"
                                                 Margin="0,0,0,6"
-                                                Padding="12,8">
+                                                Padding="12,8"
+                                                ContextMenuOpening="OnStandCardContextMenuOpening">
+                                            <!-- 右键菜单壳:菜单项在 ContextMenuOpening 事件里动态填充 -->
+                                            <Border.ContextMenu>
+                                                <ContextMenu Style="{StaticResource DarkContextMenu}" />
+                                            </Border.ContextMenu>
                                             <StackPanel Orientation="Horizontal">
                                                 <!-- 在线状态圆点:绿=在线,灰=离线 -->
                                                 <Ellipse Width="10" Height="10" VerticalAlignment="Center">
@@ -613,6 +650,23 @@
                                                            Foreground="{DynamicResource PrimaryText}"
                                                            VerticalAlignment="Center"
                                                            Margin="10,0,0,0" />
+
+                                                <!-- 传输类型:HID(旧 STM32 支架)/ USB 串口(新 C3 支架) -->
+                                                <TextBlock FontSize="11"
+                                                           Margin="8,0,0,0"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource SecondaryText}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="{DynamicResource S.Stand.TransportHid}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding TransportKind}" Value="serial">
+                                                                    <Setter Property="Text" Value="{DynamicResource S.Stand.TransportSerial}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
 
                                                 <!-- 拿起状态 -->
                                                 <TextBlock FontSize="12"

@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- 全仓唯一版本源:csproj/程序集/测试项目都从这里继承。 -->
+    <Version>0.17.0</Version>
+  </PropertyGroup>
+</Project>

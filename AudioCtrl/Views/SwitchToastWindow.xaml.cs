@@ -24,10 +24,40 @@ public partial class SwitchToastWindow : Window
     private static string? _lastShownDeviceId;  // 防重复：记录最后一次显示的设备 ID
     private static DateTime _lastShowTime;        // 防重复：最后一次显示的时间
 
+    /// <summary>通知总开关(托盘菜单"切换通知"控制,关闭后 Show() 全部静默)。
+    /// 关闭瞬间连带清空排队与合并窗口——"全部静默"不留尾巴
+    public static bool Enabled
+    {
+        get => _enabled;
+        set
+        {
+            _enabled = value;
+            if (!value)
+            {
+                _pendingQueue.Clear();
+                _mergeTimer.Stop();
+                var current = _currentToast;
+                _currentToast = null;
+                current?.Close();   // 关闭开关时，正在显示的这条也立即消失
+            }
+        }
+    }
+    private static bool _enabled = true;
+
+    /// <summary>合并窗口:首条通知延迟显示,期间到达的另一类型(播放/录制)合并为一条</summary>
+    private static readonly DispatcherTimer _mergeTimer = CreateMergeTimer();
+    private static DispatcherTimer CreateMergeTimer()
+    {
+        var t = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        t.Tick += (_, _) => { t.Stop(); if (_currentToast == null) ShowNextToast(); };
+        return t;
+    }
+
     /// <summary>
     /// 显示设备切换通知（线程安全）
     /// 如果已有 Toast 正在显示，则排队等待
     /// 同一设备 1 秒内重复通知会被去重，防止 SetDefaultEndpoint 三次调用触发多次回调
+    /// 同一次切换的播放+录制两类通知会合并为一条(250ms 合并窗口)
     /// </summary>
     /// <param name="deviceName">设备名称</param>
     /// <param name="deviceType">设备类型：播放/录音</param>
@@ -36,6 +66,12 @@ public partial class SwitchToastWindow : Window
     {
         System.Windows.Application.Current.Dispatcher.Invoke(() =>
         {
+            if (!Enabled)
+            {
+                Logger.Debug($"[Toast] 通知已关闭,静默: {deviceType} -> {deviceName}");
+                return;
+            }
+
             // 去重：同一设备 1 秒内不重复显示
             var now = DateTime.Now;
             if (deviceId != null &&
@@ -46,8 +82,22 @@ public partial class SwitchToastWindow : Window
                 return;
             }
 
-            Logger.Info($"[Toast] 请求通知: {deviceType} -> {deviceName}");
-            _pendingQueue.Enqueue(new ToastMessage(deviceName, deviceType, deviceId));
+            // 合并:队列中恰好有一条未显示的另一类型通知 → 播放+录制并为一条
+            if (_pendingQueue.Count == 1 &&
+                _pendingQueue.Peek().DeviceType != deviceType &&
+                _pendingQueue.Peek().DeviceType != "Both" && deviceType != "Both")
+            {
+                var first = _pendingQueue.Dequeue();
+                var pb = first.DeviceType == "Playback" ? first : new ToastMessage(deviceName, deviceType, deviceId);
+                var rec = first.DeviceType == "Playback" ? new ToastMessage(deviceName, deviceType, deviceId) : first;
+                _pendingQueue.Enqueue(new ToastMessage(pb.DeviceName, "Both", pb.DeviceId, rec.DeviceName));
+                Logger.Info($"[Toast] 合并通知: 播放 {pb.DeviceName} + 录制 {rec.DeviceName}");
+            }
+            else
+            {
+                Logger.Info($"[Toast] 请求通知: {deviceType} -> {deviceName}");
+                _pendingQueue.Enqueue(new ToastMessage(deviceName, deviceType, deviceId));
+            }
 
             // 防积压:队列超过 4 条时丢弃最旧的,避免事件风暴后回放几分钟
             while (_pendingQueue.Count > 4)
@@ -56,10 +106,10 @@ public partial class SwitchToastWindow : Window
                 Logger.Info($"[Toast] 队列积压,丢弃: {dropped.DeviceName}");
             }
 
-            // 如果当前没有正在显示的 Toast，立即显示队列中的第一个
-            if (_currentToast == null)
+            // 当前无显示中的 Toast:启动合并窗口(到期仍无伙伴就显示队首)
+            if (_currentToast == null && !_mergeTimer.IsEnabled)
             {
-                ShowNextToast();
+                _mergeTimer.Start();
             }
         });
     }
@@ -70,7 +120,7 @@ public partial class SwitchToastWindow : Window
     /// </summary>
     private static void ShowNextToast()
     {
-        if (_pendingQueue.Count == 0)
+        if (!Enabled || _pendingQueue.Count == 0)
             return;
 
         var msg = _pendingQueue.Dequeue();
@@ -87,7 +137,7 @@ public partial class SwitchToastWindow : Window
             return;
         }
 
-        var toast = new SwitchToastWindow(msg.DeviceName, msg.DeviceType);
+        var toast = new SwitchToastWindow(msg.DeviceName, msg.DeviceType, msg.DeviceName2);
         _currentToast = toast;
 
         // 记录最后一次显示，用于去重判断
@@ -118,15 +168,25 @@ public partial class SwitchToastWindow : Window
     /// <summary>
     /// 私有构造函数，通过 Show() 静态方法创建
     /// </summary>
-    private SwitchToastWindow(string deviceName, string deviceType)
+    private SwitchToastWindow(string deviceName, string deviceType, string? deviceName2 = null)
     {
         InitializeComponent();
 
-        // 设置文字内容（deviceType 为内部类型 "Playback"/"Recording"，文案在显示时按当前语言生成）
-        DeviceNameText.Text = deviceName;
-        StatusText.Text = Loc.F("S.Toast.DefaultFmt", Loc.T(deviceType == "Recording"
-            ? "S.Dev.TypeRecording" : "S.Dev.TypePlayback"));
-        DeviceIcon.Text = deviceType == "Recording" ? "🎤" : "🔊";
+        // 设置文字内容（deviceType 为内部类型 "Playback"/"Recording"/"Both"，文案在显示时按当前语言生成）
+        if (deviceType == "Both" && deviceName2 != null)
+        {
+            // 合并通知:播放设备名 + 内联麦克风名,一条 Toast 表达双重切换
+            DeviceNameText.Text = $"{deviceName}  ·  🎤 {deviceName2}";
+            StatusText.Text = Loc.T("S.Toast.BothFmt");
+            DeviceIcon.Text = "🔊";
+        }
+        else
+        {
+            DeviceNameText.Text = deviceName;
+            StatusText.Text = Loc.F("S.Toast.DefaultFmt", Loc.T(deviceType == "Recording"
+                ? "S.Dev.TypeRecording" : "S.Dev.TypePlayback"));
+            DeviceIcon.Text = deviceType == "Recording" ? "🎤" : "🔊";
+        }
 
         // 定位到屏幕右下角（考虑窗口大小）
         PositionAtBottomRight();
@@ -206,12 +266,13 @@ public partial class SwitchToastWindow : Window
     }
 
     /// <summary>
-    /// 待显示的 Toast 消息
+    /// 待显示的 Toast 消息（DeviceName2 仅合并通知使用:第二设备名/录制设备名）
     /// </summary>
-    private readonly struct ToastMessage(string deviceName, string deviceType, string? deviceId)
+    private readonly struct ToastMessage(string deviceName, string deviceType, string? deviceId, string? deviceName2 = null)
     {
         public string DeviceName { get; } = deviceName;
         public string DeviceType { get; } = deviceType;
         public string? DeviceId { get; } = deviceId;
+        public string? DeviceName2 { get; } = deviceName2;
     }
 }

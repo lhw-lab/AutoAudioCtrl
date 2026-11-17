@@ -11,7 +11,7 @@ namespace AudioCtrl.Services;
 /// 使用 Windows Core Audio API（COM 互操作）枚举系统中的播放和录音设备
 /// 无需第三方 NuGet 包，直接调用系统底层 API
 /// </summary>
-public class AudioDeviceService
+public class AudioDeviceService : IAudioDeviceService
 {
     /// <summary>
     /// IMMDeviceEnumerator 的 COM 类 ID
@@ -129,7 +129,7 @@ public class AudioDeviceService
                     device.GetId(out string deviceId);
 
                     // 获取设备友好名称（用户可读的设备名）
-                    string name = GetFriendlyName(device) ?? "未知设备";
+                    string name = GetFriendlyName(device) ?? Loc.T("S.Dev.Unknown");
 
                     // 检查设备是否处于活动状态
                     device.GetState(out int state);
@@ -459,6 +459,52 @@ public class AudioDeviceService
     [Guid("870AF99C-171D-4F9E-AF0D-E63DF40C2BC9")]
     private class PolicyConfigCoClass
     {
+    }
+
+    /// <summary>
+    /// 指定设备是否同时是 Console / Multimedia / Communications 三个角色的默认设备。
+    /// 只查 eMultimedia 会在用户按角色分离默认设备时误判“已默认”，导致
+    /// 调度器跳过 SetDefaultEndpoint,Console/Communications 永远不会被对齐。
+    /// </summary>
+    public bool IsDefaultForAllRoles(string deviceId, string type)
+    {
+        if (string.IsNullOrEmpty(deviceId)) return false;
+
+        var flow = type == "Recording" ? EDataFlow.eCapture : EDataFlow.eRender;
+        IMMDeviceEnumerator? enumerator = null;
+        try
+        {
+            var comType = Type.GetTypeFromCLSID(MMDeviceEnumeratorClsid);
+            enumerator = (IMMDeviceEnumerator)(Activator.CreateInstance(comType!) ??
+                throw new InvalidOperationException("无法创建音频设备枚举器 COM 实例"));
+
+            foreach (var role in new[] { ERole.eConsole, ERole.eMultimedia, ERole.eCommunications })
+            {
+                IMMDevice? device = null;
+                try
+                {
+                    device = enumerator.GetDefaultAudioEndpoint(flow, role);
+                    device.GetId(out string id);
+                    if (!string.Equals(id, deviceId, StringComparison.OrdinalIgnoreCase))
+                        return false;
+                }
+                finally
+                {
+                    if (device != null) Marshal.ReleaseComObject(device);
+                }
+            }
+            return true;
+        }
+        catch
+        {
+            // 任一角色查询失败都视为“不是三角色默认”,让调度器尝试设置;
+            // 设置失败会自然返回错误,不会误跳过。
+            return false;
+        }
+        finally
+        {
+            if (enumerator != null) Marshal.ReleaseComObject(enumerator);
+        }
     }
 
     /// <summary>
